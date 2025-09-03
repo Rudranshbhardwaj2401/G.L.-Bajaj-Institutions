@@ -1,339 +1,269 @@
-< !DOCTYPE html >
-    <html lang="en">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 
-        <head>
-            <meta charset="UTF-8" />
-            <title>G.L. Bajaj Institutions</title>
-            <link
-                href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap"
-                rel="stylesheet">
-                <style>
-                    body {
-                        margin: 0;
-                    overflow: hidden;
-                    font-family: 'Inter', sans-serif;
-        }
+// ✅ SMART LOADING MANAGER - calls HTML loading system when done
+const loadingManager = new THREE.LoadingManager(() => {
+    console.log('All 3D assets loaded!');
+    // Notify HTML loading system that assets are ready
+    if (window.onAssetsLoaded) {
+        window.onAssetsLoaded();
+    }
+});
 
-                    canvas {
-                        display: block;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    z-index: 0;
-        }
+// Track loading progress for better feedback
+loadingManager.onProgress = function (url, itemsLoaded, itemsTotal) {
+    console.log(`Loading: ${itemsLoaded}/${itemsTotal} - ${url}`);
+};
 
-                    .top-left {
-                        position: absolute;
-                    top: 20px;
-                    left: 20px;
-                    z-index: 10;
-                    color: white;
-                    font-size: 24px;
-                    font-weight: bold;
-                    font-family: 'Orbitron', monospace;
-        }
+loadingManager.onError = function (url) {
+    console.error('Error loading:', url);
+};
 
-                    .top-right {
-                        position: absolute;
-                    top: 20px;
-                    right: 20px;
-                    z-index: 10;
-                    color: white;
-                    font-weight: bold;
-        }
+// --------------------- Scene & Camera ---------------------
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(250, 20, 0);
+camera.lookAt(0, 0, 0);
 
-                    select {
-                        padding: 6px 10px;
-                    font-size: 14px;
-                    border-radius: 8px;
-                    border: 1px solid #ccc;
-        }
+// --------------------- Renderer ---------------------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-                    /* Loading Screen */
-                    #loadingScreen {
-                        position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 35%, #16213e 70%, #0f3460 100%);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    z-index: 9999;
-                    transition: opacity 0.8s ease-out;
-        }
+// --------------------- Controls ---------------------
+const orbitControls = new OrbitControls(camera, renderer.domElement);
+orbitControls.enableDamping = true;
+orbitControls.target.set(0, 1, 0);
+orbitControls.update();
 
-                    #loadingScreen.fade-out {
-                        opacity: 0;
-                    pointer-events: none;
-        }
+const fpsControls = new PointerLockControls(camera, renderer.domElement);
+fpsControls.enabled = false;
 
-                    .loading-content {
-                        text - align: center;
-                    max-width: 600px;
-                    padding: 0 20px;
-        }
+// --------------------- Movement ---------------------
+const move = { forward: false, backward: false, left: false, right: false };
+let baseSpeed = 4, runSpeed = 8, isRunning = false;
+let velocity = new THREE.Vector3(), direction = new THREE.Vector3();
 
-                    .main-title {
-                        font - family: 'Orbitron', monospace;
-                    font-size: 2.8rem;
-                    font-weight: 900;
-                    background: linear-gradient(135deg, #64b5f6, #42a5f5, #2196f3, #1976d2);
-                    background-clip: text;
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    margin-bottom: 10px;
-                    letter-spacing: 2px;
-                    animation: glow 2s ease-in-out infinite alternate;
-        }
+// Jump / Gravity
+let canJump = true, verticalVelocity = 0, gravity = -20, jumpStrength = 5;
 
-                    @keyframes glow {
-                        from {
-                        filter: drop-shadow(0 0 20px rgba(33, 150, 243, 0.3));
+// Bunny hop
+let bunnyHopMultiplier = 1, maxBunnyHop = 5;
+
+// Crouch
+let isCrouching = false, crouchOffset = -0.7, crouchSpeed = 1, normalSpeed = baseSpeed;
+let groundHeight = -19;
+
+// --------------------- Collision ---------------------
+const collidableObjects = [];
+const colliderBoxes = [];
+const cameraBox = new THREE.Box3();
+const cameraBoxSize = new THREE.Vector3(1, 2, 1); // width, height, depth
+
+function checkCollisionBox(position) {
+    cameraBox.setFromCenterAndSize(
+        new THREE.Vector3(position.x, position.y + cameraBoxSize.y / 2, position.z),
+        cameraBoxSize
+    );
+    for (let i = 0; i < colliderBoxes.length; i++) {
+        if (cameraBox.intersectsBox(colliderBoxes[i])) return true;
+    }
+    return false;
+}
+
+// --------------------- Keyboard Events ---------------------
+document.addEventListener('keydown', (e) => {
+    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight'].includes(e.code)) e.preventDefault();
+    switch (e.code) {
+        case 'KeyW': move.forward = true; break;
+        case 'KeyS': move.backward = true; break;
+        case 'KeyA': move.left = true; break;
+        case 'KeyD': move.right = true; break;
+        case 'ShiftLeft':
+        case 'ShiftRight': isRunning = true; break;
+        case 'Space':
+            if (canJump && !isCrouching) {
+                verticalVelocity = jumpStrength; canJump = false;
+                if (isRunning) bunnyHopMultiplier = Math.min(bunnyHopMultiplier * 1.1, maxBunnyHop);
             }
+            break;
+        case 'ControlLeft':
+        case 'ControlRight':
+            if (!isCrouching) { isCrouching = true; camera.position.y += crouchOffset; normalSpeed = baseSpeed; baseSpeed = crouchSpeed; }
+            break;
+    }
+});
 
-                    to {
-                        filter: drop-shadow(0 0 30px rgba(33, 150, 243, 0.6));
+document.addEventListener('keyup', (e) => {
+    switch (e.code) {
+        case 'KeyW': move.forward = false; break;
+        case 'KeyS': move.backward = false; break;
+        case 'KeyA': move.left = false; break;
+        case 'KeyD': move.right = false; break;
+        case 'ShiftLeft':
+        case 'ShiftRight': isRunning = false; break;
+        case 'ControlLeft':
+        case 'ControlRight':
+            if (isCrouching) { isCrouching = false; camera.position.y -= crouchOffset; baseSpeed = normalSpeed; }
+            break;
+    }
+});
+
+// --------------------- Pointer Lock ---------------------
+document.addEventListener('click', () => { if (activeControls === fpsControls) fpsControls.lock(); });
+
+// --------------------- Camera Mode Switching ---------------------
+let activeControls = orbitControls;
+
+function activateOrbitControls() {
+    fpsControls.unlock && fpsControls.unlock();
+    fpsControls.enabled = false;
+    orbitControls.enabled = true;
+    activeControls = orbitControls;
+    console.log('Orbit Controls Activated');
+    document.getElementById("cameraView").value = "orbit";
+}
+
+function activateFPSControls() {
+    orbitControls.enabled = false;
+    fpsControls.enabled = true;
+    activeControls = fpsControls;
+    camera.position.set(150, -19, 0);
+    console.log('FPS Controls Activated');
+    document.getElementById("cameraView").value = "fps";
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyO') activateOrbitControls();
+    if (e.code === 'KeyP') activateFPSControls();
+});
+
+document.getElementById("cameraView").addEventListener("change", (e) => {
+    if (e.target.value === "orbit") activateOrbitControls();
+    if (e.target.value === "fps") activateFPSControls();
+});
+
+// --------------------- GLTF Loader with Loading Manager ---------------------
+const dracoLoader = new DRACOLoader(loadingManager);
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
+const loader = new GLTFLoader(loadingManager);
+loader.setDRACOLoader(dracoLoader);
+
+loader.load('/model.glb',
+    (gltf) => {
+        console.log('GLTF model loaded successfully');
+        scene.add(gltf.scene);
+
+        const box = new THREE.Box3().setFromObject(gltf.scene);
+        const center = box.getCenter(new THREE.Vector3());
+        gltf.scene.position.sub(center);
+        orbitControls.target.copy(center);
+        orbitControls.update();
+
+        gltf.scene.traverse((child) => {
+            if (child.name && child.name.includes("COLLIDER")) {
+                collidableObjects.push(child);
+                child.visible = false;
+                const bBox = new THREE.Box3().setFromObject(child);
+                colliderBoxes.push(bBox);
+            }
+        });
+    },
+    (progress) => {
+        // Loading progress callback
+        const percentComplete = (progress.loaded / progress.total) * 100;
+        console.log(`GLTF Loading: ${Math.round(percentComplete)}%`);
+    },
+    (error) => {
+        console.error('GLTF loading error:', error);
+    }
+);
+
+// --------------------- HDRI Environment ---------------------
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+pmremGenerator.compileEquirectangularShader();
+
+new EXRLoader(loadingManager).setPath('/').load('sky.exr',
+    (texture) => {
+        console.log('HDRI loaded successfully');
+        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+        scene.environment = envMap;
+        scene.background = envMap;
+        texture.dispose();
+        pmremGenerator.dispose();
+    },
+    (progress) => {
+        const percentComplete = (progress.loaded / progress.total) * 100;
+        console.log(`HDRI Loading: ${Math.round(percentComplete)}%`);
+    },
+    (error) => {
+        console.error('HDRI loading error:', error);
+    }
+);
+
+// --------------------- Window Resize ---------------------
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --------------------- Animation Loop ---------------------
+const clock = new THREE.Clock();
+
+function animate() {
+    requestAnimationFrame(animate);
+    const delta = clock.getDelta();
+
+    if (activeControls === fpsControls) {
+        velocity.set(0, 0, 0);
+        direction.set(0, 0, 0);
+
+        if (move.forward) direction.z -= 1;
+        if (move.backward) direction.z += 1;
+        if (move.left) direction.x -= 1;
+        if (move.right) direction.x += 1;
+        direction.normalize();
+
+        const currentSpeed = (isRunning ? runSpeed : baseSpeed) * bunnyHopMultiplier;
+        const moveX = direction.x * currentSpeed * delta;
+        const moveZ = direction.z * currentSpeed * delta;
+
+        // Proposed position for collision checking
+        const newPos = camera.position.clone();
+        newPos.x += moveX;
+        newPos.z += -moveZ;
+
+        // Apply movement if no collision
+        if (!checkCollisionBox(newPos)) {
+            fpsControls.moveRight(moveX);
+            fpsControls.moveForward(-moveZ);
+        }
+
+        // Gravity and jumping mechanics
+        verticalVelocity += gravity * delta;
+        camera.position.y += verticalVelocity * delta;
+
+        let currentGround = isCrouching ? groundHeight + crouchOffset : groundHeight;
+        if (camera.position.y <= currentGround) {
+            camera.position.y = currentGround;
+            verticalVelocity = 0;
+            canJump = true;
+            if (!move.forward && !move.backward && !move.left && !move.right) {
+                bunnyHopMultiplier = 1;
             }
         }
+    } else {
+        orbitControls.update();
+    }
 
-                    .subtitle {
-                        font - size: 1.1rem;
-                    color: #b0bec5;
-                    font-weight: 300;
-                    margin-bottom: 60px;
-                    opacity: 0.9;
-        }
+    renderer.render(scene, camera);
+}
 
-                    .status-container {
-                        height: 40px;
-                    margin-bottom: 40px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-        }
-
-                    .status-text {
-                        font - size: 1.2rem;
-                    font-weight: 500;
-                    color: #e3f2fd;
-        }
-
-                    .loading-bar-container {
-                        width: 100%;
-                    max-width: 400px;
-                    height: 6px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 10px;
-                    overflow: hidden;
-                    margin: 30px 0;
-                    backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-                    .loading-bar {
-                        height: 100%;
-                    background: linear-gradient(90deg, #2196f3, #42a5f5, #64b5f6, #90caf9);
-                    width: 0%;
-                    border-radius: 10px;
-                    transition: width 0.3s ease;
-                    position: relative;
-                    overflow: hidden;
-        }
-
-                    .loading-bar::before {
-                        content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-                    animation: shimmer 2s infinite;
-        }
-
-                    @keyframes shimmer {
-                        0 % {
-                            transform: translateX(-100 %);
-                        }
-
-            100% {
-                        transform: translateX(100%);
-            }
-        }
-
-                    .progress-text {
-                        font - size: 1rem;
-                    color: #90caf9;
-                    font-weight: 500;
-                    margin-top: 15px;
-                    font-family: 'Orbitron', monospace;
-        }
-
-                    .footer-text {
-                        position: absolute;
-                    bottom: 30px;
-                    font-size: 1.1rem;
-                    color: #90a4ae;
-                    font-weight: 500;
-                    letter-spacing: 0.5px;
-                    text-shadow: 0 2px 8px rgba(144, 164, 174, 0.3);
-        }
-
-                    @media (max-width: 768px) {
-            .main - title {
-                        font - size: 2.2rem;
-            }
-
-                    .status-text {
-                        font - size: 1rem;
-            }
-
-                    .loading-bar-container {
-                        max - width: 300px;
-            }
-        }
-                </style>
-        </head>
-
-        <body>
-            <!-- Loading Screen -->
-            <div id="loadingScreen">
-                <div class="loading-content">
-                    <div class="main-title">G.L. BAJAJ</div>
-                    <div class="subtitle">INSTITUTIONS</div>
-
-                    <div class="status-container">
-                        <div class="status-text" id="statusText">Initializing Campus Experience...</div>
-                    </div>
-
-                    <div class="loading-bar-container">
-                        <div class="loading-bar" id="loadingBar"></div>
-                    </div>
-
-                    <div class="progress-text">
-                        <span id="progressPercent">0</span>% Complete
-                    </div>
-                </div>
-
-                <div class="footer-text">
-                    Crafted by Rudransh | Controlled by Arnav
-                </div>
-            </div>
-
-            <!-- Main Content -->
-            <div id="mainContent" style="opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in;">
-                <h1 class="top-left">G.L. Bajaj Institutions</h1>
-                <div class="top-right">
-                    <label for="cameraView">Camera View: </label>
-                    <select id="cameraView">
-                        <option value="orbit">Orbit (Default)</option>
-                        <option value="fps">First Person (FPS)</option>
-                    </select>
-                </div>
-            </div>
-
-            <script>
-        // Global loading state
-                window.loadingState = {
-                    assetsLoaded: false,
-                minimumTimeReached: false,
-                currentProgress: 0
-        };
-
-                function startLoading() {
-            const statusText = document.getElementById('statusText');
-                const loadingBar = document.getElementById('loadingBar');
-                const progressPercent = document.getElementById('progressPercent');
-                const loadingScreen = document.getElementById('loadingScreen');
-                const mainContent = document.getElementById('mainContent');
-
-                const messages = [
-                'Initializing Campus Experience...',
-                'Loading 3D Architecture Models...',
-                'Preparing Virtual Campus Tour...',
-                'Optimizing Interactive Elements...'
-                ];
-
-                let currentMessage = 0;
-                const startTime = Date.now();
-                const minimumTime =8000; // 8 seconds minimum
-
-            // Change messages every 2 seconds for first 8 seconds, then show waiting message
-            const messageTimer = setInterval(() => {
-                const elapsed = Date.now() - startTime;
-
-                if (elapsed < minimumTime) {
-                    // First 8 seconds - cycle through messages
-                    currentMessage = Math.floor(elapsed / 2000);
-                if (currentMessage < messages.length) {
-                    statusText.textContent = messages[currentMessage];
-                    }
-                } else {
-                    // After 8 seconds - show waiting message if assets not loaded
-                    if (!window.loadingState.assetsLoaded) {
-                    statusText.textContent = 'Finalizing 3D Models...';
-                    }
-                }
-            }, 100);
-
-            // Progress bar logic
-            const progressTimer = setInterval(() => {
-                const elapsed = Date.now() - startTime;
-
-                // Calculate progress based on time and asset loading
-                let timeProgress = Math.min((elapsed / minimumTime) * 80, 80); // Time contributes up to 80%
-                let assetProgress = window.loadingState.assetsLoaded ? 20 : 0; // Assets contribute 20%
-
-                window.loadingState.currentProgress = timeProgress + assetProgress;
-
-                // Update minimum time flag
-                if (elapsed >= minimumTime) {
-                    window.loadingState.minimumTimeReached = true;
-                }
-
-                // Update UI
-                loadingBar.style.width = window.loadingState.currentProgress + '%';
-                progressPercent.textContent = Math.floor(window.loadingState.currentProgress);
-
-                // Check if we can complete loading
-                if (window.loadingState.assetsLoaded && window.loadingState.minimumTimeReached) {
-                    clearInterval(messageTimer);
-                clearInterval(progressTimer);
-
-                // Complete loading
-                statusText.textContent = 'Experience Ready!';
-                loadingBar.style.width = '100%';
-                progressPercent.textContent = '100';
-
-                    setTimeout(() => {
-                    loadingScreen.classList.add('fade-out');
-                mainContent.style.opacity = '1';
-                mainContent.style.pointerEvents = 'auto';
-
-                        setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                        }, 800);
-                    }, 500);
-                }
-            }, 50);
-        }
-
-                // Function to be called by main.js when assets are loaded
-                window.onAssetsLoaded = function () {
-                    window.loadingState.assetsLoaded = true;
-                console.log('Assets loaded, checking if minimum time reached...');
-        };
-
-                // Start loading when page loads
-                document.addEventListener('DOMContentLoaded', startLoading);
-            </script>
-            <script type="module" src="/main.js"></script>
-        </body>
-
-    </html>
+// Start animation loop
+animate();
