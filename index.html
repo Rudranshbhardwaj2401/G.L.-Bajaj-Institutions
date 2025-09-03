@@ -4,12 +4,14 @@
 <head>
     <meta charset="UTF-8" />
     <title>G.L. Bajaj Institutions</title>
-    <link rel="stylesheet" href="./style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            /* 🚀 prevents scrollbars */
+            font-family: 'Inter', sans-serif;
         }
 
         canvas {
@@ -20,7 +22,6 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            /* 👈 canvas stays behind */
         }
 
         .top-left {
@@ -31,6 +32,7 @@
             color: white;
             font-size: 24px;
             font-weight: bold;
+            font-family: 'Orbitron', monospace;
         }
 
         .top-right {
@@ -48,28 +50,289 @@
             border-radius: 8px;
             border: 1px solid #ccc;
         }
+
+        /* Loading Screen */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 35%, #16213e 70%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 9999;
+            transition: opacity 0.8s ease-out;
+        }
+
+        #loadingScreen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 0 20px;
+        }
+
+        .main-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #64b5f6, #42a5f5, #2196f3, #1976d2);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 20px rgba(33, 150, 243, 0.3));
+            }
+
+            to {
+                filter: drop-shadow(0 0 30px rgba(33, 150, 243, 0.6));
+            }
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #b0bec5;
+            font-weight: 300;
+            margin-bottom: 60px;
+            opacity: 0.9;
+        }
+
+        .status-container {
+            height: 40px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #e3f2fd;
+        }
+
+        .loading-bar-container {
+            width: 100%;
+            max-width: 400px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 30px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2196f3, #42a5f5, #64b5f6, #90caf9);
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .progress-text {
+            font-size: 1rem;
+            color: #90caf9;
+            font-weight: 500;
+            margin-top: 15px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .footer-text {
+            position: absolute;
+            bottom: 30px;
+            font-size: 1.1rem;
+            color: #90a4ae;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px rgba(144, 164, 174, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.2rem;
+            }
+
+            .status-text {
+                font-size: 1rem;
+            }
+
+            .loading-bar-container {
+                max-width: 300px;
+            }
+        }
     </style>
 </head>
 
 <body>
-
     <!-- Loading Screen -->
     <div id="loadingScreen">
-        Loading... Please wait
+        <div class="loading-content">
+            <div class="main-title">G.L. BAJAJ</div>
+            <div class="subtitle">INSTITUTIONS</div>
+
+            <div class="status-container">
+                <div class="status-text" id="statusText">Initializing Campus Experience...</div>
+            </div>
+
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loadingBar"></div>
+            </div>
+
+            <div class="progress-text">
+                <span id="progressPercent">0</span>% Complete
+            </div>
+        </div>
+
+        <div class="footer-text">
+            G.L. Bajaj Institutions | Crafted by Rudransh
+        </div>
     </div>
 
-    <!-- Heading Top Left -->
-    <h1 class="top-left">G.L. Bajaj Institutions</h1>
-
-    <!-- Dropdown Top Right -->
-    <div class="top-right">
-        <label for="cameraView">Camera View: </label>
-        <select id="cameraView">
-            <option value="orbit">Orbit (Default)</option>
-            <option value="fps">First Person (FPS)</option>
-        </select>
+    <!-- Main Content -->
+    <div id="mainContent" style="opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in;">
+        <h1 class="top-left">G.L. Bajaj Institutions</h1>
+        <div class="top-right">
+            <label for="cameraView">Camera View: </label>
+            <select id="cameraView">
+                <option value="orbit">Orbit (Default)</option>
+                <option value="fps">First Person (FPS)</option>
+            </select>
+        </div>
     </div>
 
+    <script>
+        // Global loading state
+        window.loadingState = {
+            assetsLoaded: false,
+            minimumTimeReached: false,
+            currentProgress: 0
+        };
+
+        function startLoading() {
+            const statusText = document.getElementById('statusText');
+            const loadingBar = document.getElementById('loadingBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContent = document.getElementById('mainContent');
+
+            const messages = [
+                'Initializing Campus Experience...',
+                'Loading 3D Architecture Models...',
+                'Preparing Virtual Campus Tour...',
+                'Optimizing Interactive Elements...'
+            ];
+
+            let currentMessage = 0;
+            const startTime = Date.now();
+            const minimumTime = 8000; // 8 seconds minimum
+
+            // Change messages every 2 seconds for first 8 seconds, then show waiting message
+            const messageTimer = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+
+                if (elapsed < minimumTime) {
+                    // First 8 seconds - cycle through messages
+                    currentMessage = Math.floor(elapsed / 2000);
+                    if (currentMessage < messages.length) {
+                        statusText.textContent = messages[currentMessage];
+                    }
+                } else {
+                    // After 8 seconds - show waiting message if assets not loaded
+                    if (!window.loadingState.assetsLoaded) {
+                        statusText.textContent = 'Finalizing 3D Models...';
+                    }
+                }
+            }, 100);
+
+            // Progress bar logic
+            const progressTimer = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+
+                // Calculate progress based on time and asset loading
+                let timeProgress = Math.min((elapsed / minimumTime) * 80, 80); // Time contributes up to 80%
+                let assetProgress = window.loadingState.assetsLoaded ? 20 : 0; // Assets contribute 20%
+
+                window.loadingState.currentProgress = timeProgress + assetProgress;
+
+                // Update minimum time flag
+                if (elapsed >= minimumTime) {
+                    window.loadingState.minimumTimeReached = true;
+                }
+
+                // Update UI
+                loadingBar.style.width = window.loadingState.currentProgress + '%';
+                progressPercent.textContent = Math.floor(window.loadingState.currentProgress);
+
+                // Check if we can complete loading
+                if (window.loadingState.assetsLoaded && window.loadingState.minimumTimeReached) {
+                    clearInterval(messageTimer);
+                    clearInterval(progressTimer);
+
+                    // Complete loading
+                    statusText.textContent = 'Experience Ready!';
+                    loadingBar.style.width = '100%';
+                    progressPercent.textContent = '100';
+
+                    setTimeout(() => {
+                        loadingScreen.classList.add('fade-out');
+                        mainContent.style.opacity = '1';
+                        mainContent.style.pointerEvents = 'auto';
+
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                        }, 800);
+                    }, 500);
+                }
+            }, 50);
+        }
+
+        // Function to be called by main.js when assets are loaded
+        window.onAssetsLoaded = function () {
+            window.loadingState.assetsLoaded = true;
+            console.log('Assets loaded, checking if minimum time reached...');
+        };
+
+        // Start loading when page loads
+        document.addEventListener('DOMContentLoaded', startLoading);
+    </script>
     <script type="module" src="/main.js"></script>
 </body>
 

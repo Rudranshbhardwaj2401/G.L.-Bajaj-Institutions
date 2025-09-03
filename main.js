@@ -5,11 +5,23 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 
-// Use with THREE.LoadingManager
+// ✅ SMART LOADING MANAGER - calls HTML loading system when done
 const loadingManager = new THREE.LoadingManager(() => {
-    // Hide screen when all assets are done
-    document.getElementById("loadingScreen").style.display = "none";
+    console.log('All 3D assets loaded!');
+    // Notify HTML loading system that assets are ready
+    if (window.onAssetsLoaded) {
+        window.onAssetsLoaded();
+    }
 });
+
+// Track loading progress for better feedback
+loadingManager.onProgress = function (url, itemsLoaded, itemsTotal) {
+    console.log(`Loading: ${itemsLoaded}/${itemsTotal} - ${url}`);
+};
+
+loadingManager.onError = function (url) {
+    console.error('Error loading:', url);
+};
 
 // --------------------- Scene & Camera ---------------------
 const scene = new THREE.Scene();
@@ -63,7 +75,7 @@ function checkCollisionBox(position) {
     return false;
 }
 
-// --------------------- Keyboard ---------------------
+// --------------------- Keyboard Events ---------------------
 document.addEventListener('keydown', (e) => {
     if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight'].includes(e.code)) e.preventDefault();
     switch (e.code) {
@@ -85,6 +97,7 @@ document.addEventListener('keydown', (e) => {
             break;
     }
 });
+
 document.addEventListener('keyup', (e) => {
     switch (e.code) {
         case 'KeyW': move.forward = false; break;
@@ -103,7 +116,7 @@ document.addEventListener('keyup', (e) => {
 // --------------------- Pointer Lock ---------------------
 document.addEventListener('click', () => { if (activeControls === fpsControls) fpsControls.lock(); });
 
-// --------------------- Camera Mode ---------------------
+// --------------------- Camera Mode Switching ---------------------
 let activeControls = orbitControls;
 
 function activateOrbitControls() {
@@ -128,68 +141,89 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyO') activateOrbitControls();
     if (e.code === 'KeyP') activateFPSControls();
 });
+
 document.getElementById("cameraView").addEventListener("change", (e) => {
     if (e.target.value === "orbit") activateOrbitControls();
     if (e.target.value === "fps") activateFPSControls();
 });
 
-// --------------------- Lights ---------------------
-//I removed all lights
-
-// --------------------- GLTF Loader ---------------------
-// --------------------- GLTF Loader ---------------------
-// ✅ Pass loadingManager into both loaders
+// --------------------- GLTF Loader with Loading Manager ---------------------
 const dracoLoader = new DRACOLoader(loadingManager);
 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
 
 const loader = new GLTFLoader(loadingManager);
 loader.setDRACOLoader(dracoLoader);
 
-loader.load('/model.glb', (gltf) => {
-    scene.add(gltf.scene);
-    const box = new THREE.Box3().setFromObject(gltf.scene);
-    const center = box.getCenter(new THREE.Vector3());
-    gltf.scene.position.sub(center);
-    orbitControls.target.copy(center);
-    orbitControls.update();
+loader.load('/model.glb',
+    (gltf) => {
+        console.log('GLTF model loaded successfully');
+        scene.add(gltf.scene);
 
-    gltf.scene.traverse((child) => {
-        if (child.name && child.name.includes("COLLIDER")) {
-            collidableObjects.push(child);
-            child.visible = false;
-            const bBox = new THREE.Box3().setFromObject(child);
-            colliderBoxes.push(bBox);
-        }
-    });
-}, undefined, (err) => console.error('Model error:', err));
+        const box = new THREE.Box3().setFromObject(gltf.scene);
+        const center = box.getCenter(new THREE.Vector3());
+        gltf.scene.position.sub(center);
+        orbitControls.target.copy(center);
+        orbitControls.update();
 
+        gltf.scene.traverse((child) => {
+            if (child.name && child.name.includes("COLLIDER")) {
+                collidableObjects.push(child);
+                child.visible = false;
+                const bBox = new THREE.Box3().setFromObject(child);
+                colliderBoxes.push(bBox);
+            }
+        });
+    },
+    (progress) => {
+        // Loading progress callback
+        const percentComplete = (progress.loaded / progress.total) * 100;
+        console.log(`GLTF Loading: ${Math.round(percentComplete)}%`);
+    },
+    (error) => {
+        console.error('GLTF loading error:', error);
+    }
+);
 
-// --------------------- HDRI ---------------------
+// --------------------- HDRI Environment ---------------------
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
-new EXRLoader().setPath('/').load('sky.exr', (texture) => {
-    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-    scene.environment = envMap;
-    scene.background = envMap;
-    texture.dispose();
-    pmremGenerator.dispose();
-});
 
-// --------------------- Resize ---------------------
+new EXRLoader(loadingManager).setPath('/').load('sky.exr',
+    (texture) => {
+        console.log('HDRI loaded successfully');
+        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+        scene.environment = envMap;
+        scene.background = envMap;
+        texture.dispose();
+        pmremGenerator.dispose();
+    },
+    (progress) => {
+        const percentComplete = (progress.loaded / progress.total) * 100;
+        console.log(`HDRI Loading: ${Math.round(percentComplete)}%`);
+    },
+    (error) => {
+        console.error('HDRI loading error:', error);
+    }
+);
+
+// --------------------- Window Resize ---------------------
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// --------------------- Animate ---------------------
+// --------------------- Animation Loop ---------------------
 const clock = new THREE.Clock();
+
 function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
 
     if (activeControls === fpsControls) {
-        velocity.set(0, 0, 0); direction.set(0, 0, 0);
+        velocity.set(0, 0, 0);
+        direction.set(0, 0, 0);
+
         if (move.forward) direction.z -= 1;
         if (move.backward) direction.z += 1;
         if (move.left) direction.x -= 1;
@@ -200,29 +234,36 @@ function animate() {
         const moveX = direction.x * currentSpeed * delta;
         const moveZ = direction.z * currentSpeed * delta;
 
-        // Proposed position
+        // Proposed position for collision checking
         const newPos = camera.position.clone();
         newPos.x += moveX;
         newPos.z += -moveZ;
 
-        // Collision
+        // Apply movement if no collision
         if (!checkCollisionBox(newPos)) {
             fpsControls.moveRight(moveX);
             fpsControls.moveForward(-moveZ);
         }
 
-        // Gravity / Jump
+        // Gravity and jumping mechanics
         verticalVelocity += gravity * delta;
         camera.position.y += verticalVelocity * delta;
+
         let currentGround = isCrouching ? groundHeight + crouchOffset : groundHeight;
         if (camera.position.y <= currentGround) {
             camera.position.y = currentGround;
             verticalVelocity = 0;
             canJump = true;
-            if (!move.forward && !move.backward && !move.left && !move.right) bunnyHopMultiplier = 1;
+            if (!move.forward && !move.backward && !move.left && !move.right) {
+                bunnyHopMultiplier = 1;
+            }
         }
-    } else orbitControls.update();
+    } else {
+        orbitControls.update();
+    }
 
     renderer.render(scene, camera);
 }
+
+// Start animation loop
 animate();
