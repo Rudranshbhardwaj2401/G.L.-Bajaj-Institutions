@@ -47,10 +47,10 @@ let baseSpeed = 4, runSpeed = 8, isRunning = false;
 let velocity = new THREE.Vector3(), direction = new THREE.Vector3();
 
 // Jump / Gravity
-let canJump = true, verticalVelocity = 0, gravity = -20, jumpStrength = 5;
+let canJump = true, verticalVelocity = 0, gravity = -20, jumpStrength = 6;
 
 // Bunny hop
-let bunnyHopMultiplier = 1, maxBunnyHop = 5;
+let bunnyHopMultiplier = 1, maxBunnyHop = 6;
 
 // Crouch
 let isCrouching = false, crouchOffset = -0.7, crouchSpeed = 1, normalSpeed = baseSpeed;
@@ -224,7 +224,7 @@ function adjustCollisionBoxHeight(yOffset) {
 
 // --------------------- Keyboard Events ---------------------
 document.addEventListener('keydown', (e) => {
-    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyC', 'AltRight'].includes(e.code)) e.preventDefault();
+    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyC', 'AltRight', 'AltLeft'].includes(e.code)) e.preventDefault();
     switch (e.code) {
         case 'KeyW': move.forward = true; break;
         case 'KeyS': move.backward = true; break;
@@ -253,7 +253,7 @@ document.addEventListener('keydown', (e) => {
                 baseSpeed = crouchSpeed;
             }
             break;
-        case 'AltRight':
+        case 'AltRight': case 'AltLeft':
             {
                 verticalVelocity = 15; canJump = true;
             }
@@ -269,8 +269,7 @@ document.addEventListener('keyup', (e) => {
         case 'KeyD': move.right = false; break;
         case 'ShiftLeft':
         case 'ShiftRight': isRunning = false; break;
-        case 'ControlLeft':
-        case 'ControlRight':
+        case 'KeyC':
             if (isCrouching) {
                 // FIXED: Check if there's enough space to stand up
                 const standUpPos = new THREE.Vector3(camera.position.x, camera.position.y - crouchOffset, camera.position.z);
