@@ -5,6 +5,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 
+// Use with THREE.LoadingManager
+const loadingManager = new THREE.LoadingManager(() => {
+    // Hide screen when all assets are done
+    document.getElementById("loadingScreen").style.display = "none";
+});
+
 // --------------------- Scene & Camera ---------------------
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -131,9 +137,12 @@ document.getElementById("cameraView").addEventListener("change", (e) => {
 //I removed all lights
 
 // --------------------- GLTF Loader ---------------------
-const loader = new GLTFLoader();
-const dracoLoader = new DRACOLoader();
+// --------------------- GLTF Loader ---------------------
+// ✅ Pass loadingManager into both loaders
+const dracoLoader = new DRACOLoader(loadingManager);
 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
+const loader = new GLTFLoader(loadingManager);
 loader.setDRACOLoader(dracoLoader);
 
 loader.load('/model.glb', (gltf) => {
@@ -153,6 +162,7 @@ loader.load('/model.glb', (gltf) => {
         }
     });
 }, undefined, (err) => console.error('Model error:', err));
+
 
 // --------------------- HDRI ---------------------
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
