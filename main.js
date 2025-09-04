@@ -56,6 +56,312 @@ let bunnyHopMultiplier = 1, maxBunnyHop = 5;
 let isCrouching = false, crouchOffset = -0.7, crouchSpeed = 1, normalSpeed = baseSpeed;
 let groundHeight = -18.8;
 
+// --------------------- MOBILE CONTROLS ---------------------
+let isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+let joystickActive = false;
+let joystickVector = new THREE.Vector2(0, 0);
+
+// Touch controls
+let touchStartX = 0, touchStartY = 0;
+let touchCurrentX = 0, touchCurrentY = 0;
+let touchLookSensitivity = 0.002;
+
+function createMobileControls() {
+    if (!isMobileDevice && window.innerWidth > 768) return;
+
+    const controlsContainer = document.createElement('div');
+    controlsContainer.style.cssText = `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 200px;
+        pointer-events: none;
+        z-index: 1000;
+    `;
+
+    // Joystick
+    const joystickContainer = document.createElement('div');
+    joystickContainer.style.cssText = `
+        position: absolute;
+        bottom: 30px;
+        left: 30px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 3px solid rgba(255, 255, 255, 0.4);
+        border-radius: 50%;
+        pointer-events: auto;
+        touch-action: none;
+    `;
+
+    const joystickKnob = document.createElement('div');
+    joystickKnob.style.cssText = `
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.1s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    `;
+
+    joystickContainer.appendChild(joystickKnob);
+
+    // Jump Button
+    const jumpButton = document.createElement('div');
+    jumpButton.style.cssText = `
+        position: absolute;
+        bottom: 120px;
+        right: 30px;
+        width: 80px;
+        height: 80px;
+        background: rgba(76, 175, 80, 0.8);
+        border: 3px solid rgba(76, 175, 80, 1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        pointer-events: auto;
+        touch-action: none;
+        user-select: none;
+        font-family: 'Inter', sans-serif;
+    `;
+    jumpButton.textContent = 'JUMP';
+
+    // Sprint Button
+    const sprintButton = document.createElement('div');
+    sprintButton.style.cssText = `
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 152, 0, 0.8);
+        border: 3px solid rgba(255, 152, 0, 1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        pointer-events: auto;
+        touch-action: none;
+        user-select: none;
+        font-family: 'Inter', sans-serif;
+    `;
+    sprintButton.textContent = 'SPRINT';
+
+    // Camera mode toggle for mobile
+    const cameraModeButton = document.createElement('div');
+    cameraModeButton.style.cssText = `
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        width: 60px;
+        height: 40px;
+        background: rgba(33, 150, 243, 0.8);
+        border: 2px solid rgba(33, 150, 243, 1);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 10px;
+        pointer-events: auto;
+        touch-action: none;
+        user-select: none;
+        font-family: 'Inter', sans-serif;
+    `;
+    cameraModeButton.textContent = 'CAM';
+
+    controlsContainer.appendChild(joystickContainer);
+    controlsContainer.appendChild(jumpButton);
+    controlsContainer.appendChild(sprintButton);
+    controlsContainer.appendChild(cameraModeButton);
+    document.body.appendChild(controlsContainer);
+
+    // Joystick Controls
+    let joystickTouchId = null;
+    const maxJoystickDistance = 35;
+
+    function handleJoystickStart(e) {
+        e.preventDefault();
+        joystickActive = true;
+        joystickTouchId = e.changedTouches ? e.changedTouches[0].identifier : null;
+        joystickKnob.style.transition = 'none';
+    }
+
+    function handleJoystickMove(e) {
+        if (!joystickActive) return;
+        
+        let clientX, clientY;
+        if (e.changedTouches) {
+            const touch = Array.from(e.changedTouches).find(t => t.identifier === joystickTouchId);
+            if (!touch) return;
+            clientX = touch.clientX;
+            clientY = touch.clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        const rect = joystickContainer.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const deltaX = clientX - centerX;
+        const deltaY = clientY - centerY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (distance <= maxJoystickDistance) {
+            joystickKnob.style.transform = `translate(${deltaX - 25}px, ${deltaY - 25}px)`;
+            joystickVector.set(deltaX / maxJoystickDistance, -deltaY / maxJoystickDistance);
+        } else {
+            const normalizedX = (deltaX / distance) * maxJoystickDistance;
+            const normalizedY = (deltaY / distance) * maxJoystickDistance;
+            joystickKnob.style.transform = `translate(${normalizedX - 25}px, ${normalizedY - 25}px)`;
+            joystickVector.set(normalizedX / maxJoystickDistance, -normalizedY / maxJoystickDistance);
+        }
+
+        // Update movement state based on joystick
+        const threshold = 0.2;
+        move.forward = joystickVector.y > threshold;
+        move.backward = joystickVector.y < -threshold;
+        move.left = joystickVector.x < -threshold;
+        move.right = joystickVector.x > threshold;
+    }
+
+    function handleJoystickEnd(e) {
+        if (e.changedTouches && joystickTouchId !== null) {
+            const touch = Array.from(e.changedTouches).find(t => t.identifier === joystickTouchId);
+            if (!touch) return;
+        }
+
+        joystickActive = false;
+        joystickTouchId = null;
+        joystickKnob.style.transition = 'all 0.2s ease';
+        joystickKnob.style.transform = 'translate(-50%, -50%)';
+        joystickVector.set(0, 0);
+        
+        // Reset movement
+        move.forward = false;
+        move.backward = false;
+        move.left = false;
+        move.right = false;
+    }
+
+    // Touch events for joystick
+    joystickContainer.addEventListener('touchstart', handleJoystickStart, { passive: false });
+    joystickContainer.addEventListener('touchmove', handleJoystickMove, { passive: false });
+    joystickContainer.addEventListener('touchend', handleJoystickEnd, { passive: false });
+    
+    // Mouse events for joystick (for testing on desktop)
+    joystickContainer.addEventListener('mousedown', handleJoystickStart);
+    document.addEventListener('mousemove', (e) => {
+        if (joystickActive && !e.changedTouches) handleJoystickMove(e);
+    });
+    document.addEventListener('mouseup', (e) => {
+        if (joystickActive && !e.changedTouches) handleJoystickEnd(e);
+    });
+
+    // Jump Button
+    function handleJump(e) {
+        e.preventDefault();
+        if (canJump && !isCrouching && activeControls === fpsControls) {
+            const headCheck = checkHeadCollision(camera.position);
+            if (!headCheck.collision) {
+                verticalVelocity = jumpStrength; 
+                canJump = false;
+                if (isRunning) bunnyHopMultiplier = Math.min(bunnyHopMultiplier * 1.1, maxBunnyHop);
+            }
+        }
+        jumpButton.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            jumpButton.style.transform = 'scale(1)';
+        }, 100);
+    }
+
+    jumpButton.addEventListener('touchstart', handleJump, { passive: false });
+    jumpButton.addEventListener('mousedown', handleJump);
+
+    // Sprint Button
+    function handleSprintStart(e) {
+        e.preventDefault();
+        isRunning = true;
+        sprintButton.style.background = 'rgba(255, 152, 0, 1)';
+        sprintButton.style.transform = 'scale(0.95)';
+    }
+
+    function handleSprintEnd(e) {
+        e.preventDefault();
+        isRunning = false;
+        sprintButton.style.background = 'rgba(255, 152, 0, 0.8)';
+        sprintButton.style.transform = 'scale(1)';
+    }
+
+    sprintButton.addEventListener('touchstart', handleSprintStart, { passive: false });
+    sprintButton.addEventListener('touchend', handleSprintEnd, { passive: false });
+    sprintButton.addEventListener('mousedown', handleSprintStart);
+    sprintButton.addEventListener('mouseup', handleSprintEnd);
+
+    // Camera Mode Button
+    cameraModeButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (activeControls === orbitControls) {
+            activateFPSControls();
+            cameraModeButton.textContent = 'ORBIT';
+        } else {
+            activateOrbitControls();
+            cameraModeButton.textContent = 'CAM';
+        }
+    }, { passive: false });
+
+    // Touch look controls for camera (when in FPS mode)
+    let touchLookActive = false;
+    let lastTouchX = 0, lastTouchY = 0;
+
+    renderer.domElement.addEventListener('touchstart', (e) => {
+        if (activeControls === fpsControls && e.touches.length === 1) {
+            touchLookActive = true;
+            lastTouchX = e.touches[0].clientX;
+            lastTouchY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    renderer.domElement.addEventListener('touchmove', (e) => {
+        if (touchLookActive && activeControls === fpsControls && e.touches.length === 1) {
+            const deltaX = e.touches[0].clientX - lastTouchX;
+            const deltaY = e.touches[0].clientY - lastTouchY;
+
+            // Apply camera rotation
+            camera.rotation.y -= deltaX * touchLookSensitivity;
+            camera.rotation.x -= deltaY * touchLookSensitivity;
+            camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+
+            lastTouchX = e.touches[0].clientX;
+            lastTouchY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    renderer.domElement.addEventListener('touchend', (e) => {
+        if (e.touches.length === 0) {
+            touchLookActive = false;
+        }
+    }, { passive: true });
+}
+
+// Initialize mobile controls
+createMobileControls();
+
 // --------------------- ENHANCED COLLISION SYSTEM ---------------------
 const collidableObjects = [];
 const colliderBoxes = [];
@@ -222,17 +528,31 @@ function adjustCollisionBoxHeight(yOffset) {
     }
 }
 
-// --------------------- Keyboard Events ---------------------
+// --------------------- Keyboard Events (Enhanced with Arrow Keys) ---------------------
 document.addEventListener('keydown', (e) => {
-    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'AltRight', 'AltLeft', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();//crouch removed
+    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'AltRight', 'AltLeft', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
     switch (e.code) {
-        case 'KeyW': case 'ArrowUp':{ move.forward = true; 
-        cameraBoxSize = new THREE.Vector3(0.8, 1.8, 0.8);} break
-        case 'KeyS': case 'ArrowDown': move.backward = true; break;
-        case 'KeyA': case 'ArrowLeft': move.left = true; break;
-        case 'KeyD': case 'ArrowRight': move.right = true; break;
+        // WASD Controls
+        case 'KeyW':
+        case 'ArrowUp': // Added arrow key support
+            move.forward = true; 
+            break;
+        case 'KeyS':
+        case 'ArrowDown': // Added arrow key support
+            move.backward = true; 
+            break;
+        case 'KeyA':
+        case 'ArrowLeft': // Added arrow key support
+            move.left = true; 
+            break;
+        case 'KeyD':
+        case 'ArrowRight': // Added arrow key support
+            move.right = true; 
+            break;
         case 'ShiftLeft':
-        case 'ShiftRight': isRunning = true; break;
+        case 'ShiftRight': 
+            isRunning = true; 
+            break;
         case 'Space':
             if (canJump && !isCrouching) {
                 // FIXED: Check for head collision before jumping
@@ -246,8 +566,8 @@ document.addEventListener('keydown', (e) => {
                 }
             }
             break;
-        //crouch removed
-        case 'AltRight': case 'AltLeft':
+        case 'AltRight': 
+        case 'AltLeft':
             {
                 verticalVelocity = 15; canJump = true;
             }
@@ -257,19 +577,33 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('keyup', (e) => {
     switch (e.code) {
-        case 'KeyW': case 'ArrowUp': move.forward = false; break;
-        case 'KeyS': case 'ArrowDown': move.backward = false; break;
-        case 'KeyA': case 'ArrowLeft': move.left = false; break;
-        case 'KeyD': case 'ArrowRight': move.right = false; break;
+        // WASD Controls
+        case 'KeyW':
+        case 'ArrowUp': // Added arrow key support
+            move.forward = false; 
+            break;
+        case 'KeyS':
+        case 'ArrowDown': // Added arrow key support
+            move.backward = false; 
+            break;
+        case 'KeyA':
+        case 'ArrowLeft': // Added arrow key support
+            move.left = false; 
+            break;
+        case 'KeyD':
+        case 'ArrowRight': // Added arrow key support
+            move.right = false; 
+            break;
         case 'ShiftLeft':
-        case 'ShiftRight': isRunning = false; break;
-        //crouch removed
+        case 'ShiftRight': 
+            isRunning = false; 
+            break;
     }
 });
 
 // --------------------- Pointer Lock ---------------------
 document.addEventListener('click', () => {
-    if (activeControls === fpsControls) fpsControls.lock();
+    if (activeControls === fpsControls && !isMobileDevice) fpsControls.lock();
 });
 
 // --------------------- Camera Mode Switching ---------------------
