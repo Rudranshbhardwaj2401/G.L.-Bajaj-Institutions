@@ -69,7 +69,7 @@ let joystickVector = new THREE.Vector2(0, 0);
 // Touch controls
 let touchStartX = 0, touchStartY = 0;
 let touchCurrentX = 0, touchCurrentY = 0;
-let touchLookSensitivity = 0.002;
+let touchLookSensitivity = 0.01;
 
 function createMobileControls() {
     if (!isMobileDevice && window.innerWidth > 768) return;
