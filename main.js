@@ -224,13 +224,13 @@ function adjustCollisionBoxHeight(yOffset) {
 
 // --------------------- Keyboard Events ---------------------
 document.addEventListener('keydown', (e) => {
-    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'AltRight', 'AltLeft'].includes(e.code)) e.preventDefault();//crouch removed
+    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'AltRight', 'AltLeft', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();//crouch removed
     switch (e.code) {
-        case 'KeyW':{ move.forward = true; 
+        case 'KeyW': case 'ArrowUp':{ move.forward = true; 
         cameraBoxSize = new THREE.Vector3(0.8, 1.8, 0.8);} break
-        case 'KeyS': move.backward = true; break;
-        case 'KeyA': move.left = true; break;
-        case 'KeyD': move.right = true; break;
+        case 'KeyS': case 'ArrowDown': move.backward = true; break;
+        case 'KeyA': case 'ArrowLeft': move.left = true; break;
+        case 'KeyD': case 'ArrowRight': move.right = true; break;
         case 'ShiftLeft':
         case 'ShiftRight': isRunning = true; break;
         case 'Space':
@@ -257,10 +257,10 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('keyup', (e) => {
     switch (e.code) {
-        case 'KeyW': move.forward = false; break;
-        case 'KeyS': move.backward = false; break;
-        case 'KeyA': move.left = false; break;
-        case 'KeyD': move.right = false; break;
+        case 'KeyW': case 'ArrowUp': move.forward = false; break;
+        case 'KeyS': case 'ArrowDown': move.backward = false; break;
+        case 'KeyA': case 'ArrowLeft': move.left = false; break;
+        case 'KeyD': case 'ArrowRight': move.right = false; break;
         case 'ShiftLeft':
         case 'ShiftRight': isRunning = false; break;
         //crouch removed
