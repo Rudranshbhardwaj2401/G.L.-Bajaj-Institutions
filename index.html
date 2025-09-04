@@ -9,65 +9,7 @@
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
     <style>
-        /* Force landscape orientation */
-        @media screen and (orientation: portrait) and (max-width: 1024px) {
-            body {
-                transform: rotate(90deg);
-                transform-origin: left top;
-                width: 100vh;
-                height: 100vw;
-                overflow-x: hidden;
-                position: absolute;
-                top: 100%;
-                left: 0;
-            }
-            
-            #rotationMessage {
-                display: flex !important;
-            }
-        }
-
-        /* Rotation message for portrait mode */
-        #rotationMessage {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 35%, #16213e 70%, #0f3460 100%);
-            z-index: 99999;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        #rotationMessage .rotate-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-            animation: rotateIcon 2s infinite ease-in-out;
-        }
-
-        @keyframes rotateIcon {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
-        }
-
-        #rotationMessage h2 {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-        }
-
-        #rotationMessage p {
-            font-size: 1.1rem;
-            color: #b0bec5;
-            line-height: 1.5;
-        }
+        
 
         body {
             margin: 0;
