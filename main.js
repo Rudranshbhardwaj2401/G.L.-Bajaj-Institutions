@@ -29,6 +29,7 @@ camera.lookAt(0, 0, 0);
 
 // --------------------- Renderer ---------------------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); //changekara
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -63,7 +64,7 @@ let groundHeight = -18.8;
 
 // --------------------- MOBILE CONTROLS ---------------------
 let isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-let joystickActive = false;
+let joystickActive = true; //changekara
 let joystickVector = new THREE.Vector2(0, 0);
 
 // Touch controls
