@@ -84,7 +84,7 @@ function createMobileControls() {
     const joystickContainer = document.createElement('div');
     joystickContainer.style.cssText = `
         position: absolute;
-        bottom: 30px;
+        bottom: 36px;
         left: 30px;
         width: 120px;
         height: 120px;
@@ -163,8 +163,8 @@ function createMobileControls() {
     const cameraModeButton = document.createElement('div');
     cameraModeButton.style.cssText = `
         position: absolute;
-        top: 30px;
-        right: 30px;
+        top: 120px;
+        right: 130px;
         width: 60px;
         height: 40px;
         background: rgba(33, 150, 243, 0.8);
