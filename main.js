@@ -56,6 +56,11 @@ let bunnyHopMultiplier = 1, maxBunnyHop = 5;
 let isCrouching = false, crouchOffset = -0.7, crouchSpeed = 1, normalSpeed = baseSpeed;
 let groundHeight = -18.8;
 
+
+
+
+
+
 // --------------------- MOBILE CONTROLS ---------------------
 let isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 let joystickActive = false;
@@ -329,6 +334,10 @@ function createMobileControls() {
     let touchLookActive = false;
     let lastTouchX = 0, lastTouchY = 0;
 
+    // Store pitch and yaw separately for proper FPS camera control
+    let cameraPitch = 0; // Vertical rotation (around X-axis)
+    let cameraYaw = 0;   // Horizontal rotation (around Y-axis)
+
     renderer.domElement.addEventListener('touchstart', (e) => {
         if (activeControls === fpsControls && e.touches.length === 1) {
             touchLookActive = true;
@@ -342,10 +351,17 @@ function createMobileControls() {
             const deltaX = e.touches[0].clientX - lastTouchX;
             const deltaY = e.touches[0].clientY - lastTouchY;
 
-            // Apply camera rotation
-            camera.rotation.y -= deltaX * touchLookSensitivity;
-            camera.rotation.x -= deltaY * touchLookSensitivity;
-            camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+            // Update yaw (horizontal rotation) and pitch (vertical rotation)
+            cameraYaw -= deltaX * touchLookSensitivity;
+            cameraPitch -= deltaY * touchLookSensitivity;
+            
+            // Clamp pitch to prevent camera flipping
+            cameraPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraPitch));
+            
+            // Apply rotations in the correct order: Y (yaw) then X (pitch)
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = cameraYaw;
+            camera.rotation.x = cameraPitch;
 
             lastTouchX = e.touches[0].clientX;
             lastTouchY = e.touches[0].clientY;
@@ -361,6 +377,11 @@ function createMobileControls() {
 
 // Initialize mobile controls
 createMobileControls();
+
+
+
+
+
 
 // --------------------- ENHANCED COLLISION SYSTEM ---------------------
 const collidableObjects = [];
