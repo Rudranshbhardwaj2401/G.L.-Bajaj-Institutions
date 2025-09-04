@@ -29,7 +29,7 @@ camera.lookAt(0, 0, 0);
 
 // --------------------- Renderer ---------------------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); //changekara
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -57,15 +57,11 @@ let bunnyHopMultiplier = 1, maxBunnyHop = 5;
 let isCrouching = false, crouchOffset = -0.7, crouchSpeed = 1, normalSpeed = baseSpeed;
 let groundHeight = -18.8;
 
-
-
-
-
-
 // --------------------- MOBILE CONTROLS ---------------------
 let isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-let joystickActive = true; //changekara
+let joystickActive = true;
 let joystickVector = new THREE.Vector2(0, 0);
+let rightTouchId = null; // Added missing variable declaration
 
 // Touch controls
 let touchStartX = 0, touchStartY = 0;
@@ -324,6 +320,7 @@ function createMobileControls() {
         e.preventDefault();
         if (activeControls === orbitControls) {
             activateFPSControls();
+            camera.rotation.set(0,0,0);
             cameraModeButton.textContent = 'ORBIT';
         } else {
             activateOrbitControls();
@@ -340,49 +337,68 @@ function createMobileControls() {
     let cameraYaw = 0;   // Horizontal rotation (around Y-axis)
 
     renderer.domElement.addEventListener('touchstart', (e) => {
-        if (activeControls === fpsControls && e.touches.length === 1) {
-            touchLookActive = true;
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
+        if (activeControls !== fpsControls) return;
+        for (let t of e.changedTouches) {
+            // ignore joystick touch if already assigned
+            if (joystickTouchId !== null && t.identifier === joystickTouchId) continue;
+
+            // if touch starts on right half and we don't have a look finger yet - assign it
+            if (rightTouchId === null && t.clientX > window.innerWidth / 2) {
+                rightTouchId = t.identifier;
+                touchLookActive = true;
+                lastTouchX = t.clientX;
+                lastTouchY = t.clientY;
+            }
         }
     }, { passive: true });
 
     renderer.domElement.addEventListener('touchmove', (e) => {
-        if (touchLookActive && activeControls === fpsControls && e.touches.length === 1) {
-            const deltaX = e.touches[0].clientX - lastTouchX;
-            const deltaY = e.touches[0].clientY - lastTouchY;
+        if (activeControls !== fpsControls) return;
+        for (let t of e.changedTouches) {
+            // joystick finger - delegate to existing joystick handler
+            if (joystickTouchId !== null && t.identifier === joystickTouchId) {
+                handleJoystickMove({ changedTouches: [t], preventDefault: () => {} });
+                continue;
+            }
 
-            // Update yaw (horizontal rotation) and pitch (vertical rotation)
-            cameraYaw -= deltaX * touchLookSensitivity;
-            cameraPitch -= deltaY * touchLookSensitivity;
-            
-            // Clamp pitch to prevent camera flipping
-            cameraPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraPitch));
-            
-            // Apply rotations in the correct order: Y (yaw) then X (pitch)
-            camera.rotation.order = 'YXZ';
-            camera.rotation.y = cameraYaw;
-            camera.rotation.x = cameraPitch;
+            // look finger
+            if (rightTouchId !== null && t.identifier === rightTouchId) {
+                const deltaX = t.clientX - lastTouchX;
+                const deltaY = t.clientY - lastTouchY;
 
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
+                cameraYaw -= deltaX * touchLookSensitivity;
+                cameraPitch -= deltaY * touchLookSensitivity;
+
+                cameraPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraPitch));
+                camera.rotation.order = 'YXZ';
+                camera.rotation.y = cameraYaw;
+                camera.rotation.x = cameraPitch;
+
+                lastTouchX = t.clientX;
+                lastTouchY = t.clientY;
+            }
         }
     }, { passive: true });
 
     renderer.domElement.addEventListener('touchend', (e) => {
-        if (e.touches.length === 0) {
-            touchLookActive = false;
+        for (let t of e.changedTouches) {
+            // joystick ended
+            if (joystickTouchId !== null && t.identifier === joystickTouchId) {
+                handleJoystickEnd({ changedTouches: [t], preventDefault: () => {} });
+                joystickTouchId = null;
+            }
+
+            // look finger ended
+            if (rightTouchId !== null && t.identifier === rightTouchId) {
+                rightTouchId = null;
+                touchLookActive = false;
+            }
         }
     }, { passive: true });
 }
 
 // Initialize mobile controls
 createMobileControls();
-
-
-
-
-
 
 // --------------------- ENHANCED COLLISION SYSTEM ---------------------
 const collidableObjects = [];
@@ -590,9 +606,8 @@ document.addEventListener('keydown', (e) => {
             break;
         case 'AltRight': 
         case 'AltLeft':
-            {
-                verticalVelocity = 15; canJump = true;
-            }
+            verticalVelocity = 15; 
+            canJump = true;
             break;
     }
 });
