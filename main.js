@@ -23,7 +23,7 @@ loadingManager.onError = function (url) {
 
 // --------------------- Scene & Camera ---------------------
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(250, 20, 0);
 camera.lookAt(0, 0, 0);
 
@@ -50,11 +50,11 @@ let velocity = new THREE.Vector3(), direction = new THREE.Vector3();
 let canJump = true, verticalVelocity = 0, gravity = -20, jumpStrength = 6;
 
 // Bunny hop
-let bunnyHopMultiplier = 1, maxBunnyHop = 6;
+let bunnyHopMultiplier = 1, maxBunnyHop = 5;
 
 // Crouch
 let isCrouching = false, crouchOffset = -0.7, crouchSpeed = 1, normalSpeed = baseSpeed;
-let groundHeight = -19;
+let groundHeight = -18.8;
 
 // --------------------- ENHANCED COLLISION SYSTEM ---------------------
 const collidableObjects = [];
@@ -224,9 +224,10 @@ function adjustCollisionBoxHeight(yOffset) {
 
 // --------------------- Keyboard Events ---------------------
 document.addEventListener('keydown', (e) => {
-    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyC', 'AltRight', 'AltLeft'].includes(e.code)) e.preventDefault();
+    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'AltRight', 'AltLeft'].includes(e.code)) e.preventDefault();//crouch removed
     switch (e.code) {
-        case 'KeyW': move.forward = true; break;
+        case 'KeyW':{ move.forward = true; 
+        cameraBoxSize = new THREE.Vector3(0.8, 1.8, 0.8);} break
         case 'KeyS': move.backward = true; break;
         case 'KeyA': move.left = true; break;
         case 'KeyD': move.right = true; break;
@@ -245,14 +246,7 @@ document.addEventListener('keydown', (e) => {
                 }
             }
             break;
-        case 'KeyC':
-            if (!isCrouching) {
-                isCrouching = true;
-                camera.position.y += crouchOffset;
-                normalSpeed = baseSpeed;
-                baseSpeed = crouchSpeed;
-            }
-            break;
+        //crouch removed
         case 'AltRight': case 'AltLeft':
             {
                 verticalVelocity = 15; canJump = true;
@@ -269,21 +263,7 @@ document.addEventListener('keyup', (e) => {
         case 'KeyD': move.right = false; break;
         case 'ShiftLeft':
         case 'ShiftRight': isRunning = false; break;
-        case 'KeyC':
-            if (isCrouching) {
-                // FIXED: Check if there's enough space to stand up
-                const standUpPos = new THREE.Vector3(camera.position.x, camera.position.y - crouchOffset, camera.position.z);
-                const headCheck = checkHeadCollision(standUpPos);
-                
-                if (!headCheck.collision) {
-                    isCrouching = false;
-                    camera.position.y -= crouchOffset;
-                    baseSpeed = normalSpeed;
-                } else {
-                    console.log('Cannot stand up - head collision detected');
-                }
-            }
-            break;
+        //crouch removed
     }
 });
 
