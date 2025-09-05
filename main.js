@@ -400,6 +400,105 @@ function createMobileControls() {
 // Initialize mobile controls
 createMobileControls();
 
+// --------------------- FULLSCREEN BUTTON ---------------------
+function createFullscreenButton() {
+    const fullscreenButton = document.createElement('div');
+    fullscreenButton.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 45px;
+        background: rgba(33, 150, 243, 0.9);
+        border: 2px solid rgba(33, 150, 243, 1);
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        cursor: pointer;
+        user-select: none;
+        z-index: 2000;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    `;
+    fullscreenButton.textContent = 'FULLSCREEN';
+
+    // Hover effects
+    fullscreenButton.addEventListener('mouseenter', () => {
+        fullscreenButton.style.background = 'rgba(33, 150, 243, 1)';
+        fullscreenButton.style.transform = 'translateX(-50%) scale(1.05)';
+        fullscreenButton.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.3)';
+    });
+
+    fullscreenButton.addEventListener('mouseleave', () => {
+        fullscreenButton.style.background = 'rgba(33, 150, 243, 0.9)';
+        fullscreenButton.style.transform = 'translateX(-50%) scale(1)';
+        fullscreenButton.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+    });
+
+    // Fullscreen functionality
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            // Enter fullscreen
+            document.documentElement.requestFullscreen().then(() => {
+                fullscreenButton.textContent = 'EXIT FULLSCREEN';
+                fullscreenButton.style.background = 'rgba(255, 152, 0, 0.9)';
+                fullscreenButton.style.borderColor = 'rgba(255, 152, 0, 1)';
+                fullscreenButton.style.width = '150px';
+                console.log('Entered fullscreen mode');
+            }).catch((err) => {
+                console.error('Error attempting to enable fullscreen:', err);
+            });
+        } else {
+            // Exit fullscreen
+            document.exitFullscreen().then(() => {
+                fullscreenButton.textContent = 'FULLSCREEN';
+                fullscreenButton.style.background = 'rgba(33, 150, 243, 0.9)';
+                fullscreenButton.style.borderColor = 'rgba(33, 150, 243, 1)';
+                fullscreenButton.style.width = '120px';
+                console.log('Exited fullscreen mode');
+            }).catch((err) => {
+                console.error('Error attempting to exit fullscreen:', err);
+            });
+        }
+    }
+
+    // Click and touch events
+    fullscreenButton.addEventListener('click', toggleFullscreen);
+    fullscreenButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        toggleFullscreen();
+    }, { passive: false });
+
+    // Listen for fullscreen changes (when user presses ESC or F11)
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+            fullscreenButton.textContent = 'EXIT FULLSCREEN';
+            fullscreenButton.style.background = 'rgba(255, 152, 0, 0.9)';
+            fullscreenButton.style.borderColor = 'rgba(255, 152, 0, 1)';
+            fullscreenButton.style.width = '150px';
+        } else {
+            fullscreenButton.textContent = 'FULLSCREEN';
+            fullscreenButton.style.background = 'rgba(33, 150, 243, 0.9)';
+            fullscreenButton.style.borderColor = 'rgba(33, 150, 243, 1)';
+            fullscreenButton.style.width = '120px';
+        }
+    });
+
+    // Add button to page
+    document.body.appendChild(fullscreenButton);
+    
+    return fullscreenButton;
+}
+
+// Create fullscreen button
+createFullscreenButton();
+
 // --------------------- ENHANCED COLLISION SYSTEM ---------------------
 const collidableObjects = [];
 const colliderBoxes = [];
