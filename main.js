@@ -55,7 +55,7 @@ let bunnyHopMultiplier = 1, maxBunnyHop = 5;
 
 // Crouch
 let isCrouching = false, crouchOffset = -0.7, crouchSpeed = 1, normalSpeed = baseSpeed;
-let groundHeight = -18.8;
+let groundHeight = -18.5;
 
 // --------------------- MOBILE CONTROLS ---------------------
 let isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -204,7 +204,7 @@ function createMobileControls() {
 
     function handleJoystickMove(e) {
         if (!joystickActive) return;
-        
+
         let clientX, clientY;
         if (e.changedTouches) {
             const touch = Array.from(e.changedTouches).find(t => t.identifier === joystickTouchId);
@@ -253,7 +253,7 @@ function createMobileControls() {
         joystickKnob.style.transition = 'all 0.2s ease';
         joystickKnob.style.transform = 'translate(-50%, -50%)';
         joystickVector.set(0, 0);
-        
+
         // Reset movement
         move.forward = false;
         move.backward = false;
@@ -265,7 +265,7 @@ function createMobileControls() {
     joystickContainer.addEventListener('touchstart', handleJoystickStart, { passive: false });
     joystickContainer.addEventListener('touchmove', handleJoystickMove, { passive: false });
     joystickContainer.addEventListener('touchend', handleJoystickEnd, { passive: false });
-    
+
     // Mouse events for joystick (for testing on desktop)
     joystickContainer.addEventListener('mousedown', handleJoystickStart);
     document.addEventListener('mousemove', (e) => {
@@ -281,7 +281,7 @@ function createMobileControls() {
         if (canJump && !isCrouching && activeControls === fpsControls) {
             const headCheck = checkHeadCollision(camera.position);
             if (!headCheck.collision) {
-                verticalVelocity = jumpStrength; 
+                verticalVelocity = jumpStrength;
                 canJump = false;
                 if (isRunning) bunnyHopMultiplier = Math.min(bunnyHopMultiplier * 1.1, maxBunnyHop);
             }
@@ -320,7 +320,7 @@ function createMobileControls() {
         e.preventDefault();
         if (activeControls === orbitControls) {
             activateFPSControls();
-            camera.rotation.set(0,0,0);
+            camera.rotation.set(0, 0, 0);
             cameraModeButton.textContent = 'ORBIT';
         } else {
             activateOrbitControls();
@@ -357,7 +357,7 @@ function createMobileControls() {
         for (let t of e.changedTouches) {
             // joystick finger - delegate to existing joystick handler
             if (joystickTouchId !== null && t.identifier === joystickTouchId) {
-                handleJoystickMove({ changedTouches: [t], preventDefault: () => {} });
+                handleJoystickMove({ changedTouches: [t], preventDefault: () => { } });
                 continue;
             }
 
@@ -369,7 +369,7 @@ function createMobileControls() {
                 cameraYaw -= deltaX * touchLookSensitivity;
                 cameraPitch -= deltaY * touchLookSensitivity;
 
-                cameraPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraPitch));
+                cameraPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraPitch));
                 camera.rotation.order = 'YXZ';
                 camera.rotation.y = cameraYaw;
                 camera.rotation.x = cameraPitch;
@@ -384,7 +384,7 @@ function createMobileControls() {
         for (let t of e.changedTouches) {
             // joystick ended
             if (joystickTouchId !== null && t.identifier === joystickTouchId) {
-                handleJoystickEnd({ changedTouches: [t], preventDefault: () => {} });
+                handleJoystickEnd({ changedTouches: [t], preventDefault: () => { } });
                 joystickTouchId = null;
             }
 
@@ -492,7 +492,7 @@ function createFullscreenButton() {
 
     // Add button to page
     document.body.appendChild(fullscreenButton);
-    
+
     return fullscreenButton;
 }
 
@@ -506,7 +506,7 @@ const cameraBox = new THREE.Box3();
 
 // Enhanced collision box - more realistic player size
 const cameraBoxSize = new THREE.Vector3(0.8, 1.8, 0.8); // Taller for better head collision
-const collisionMargin = 0.05;
+const collisionMargin = 0.025;
 
 // FIXED: Separate collision detection for different movement types
 function checkHorizontalCollision(position) {
@@ -527,14 +527,14 @@ function checkHorizontalCollision(position) {
 // FIXED: Dedicated vertical collision check for jumping/falling
 function checkVerticalCollision(position, direction = 'up') {
     const testBox = cameraBox.clone();
-    
+
     // For upward movement (jumping), check from head position
     // For downward movement (falling), check from feet position
     let testY = position.y + cameraBoxSize.y / 2;
     if (direction === 'down') {
         testY = position.y;
     }
-    
+
     testBox.setFromCenterAndSize(
         new THREE.Vector3(position.x, testY, position.z),
         cameraBoxSize
@@ -556,11 +556,11 @@ function checkVerticalCollision(position, direction = 'up') {
 function checkHeadCollision(position) {
     const headTestBox = new THREE.Box3();
     const headHeight = 0.3; // Small box at head level
-    
+
     headTestBox.setFromCenterAndSize(
         new THREE.Vector3(
-            position.x, 
-            position.y + cameraBoxSize.y - headHeight/2, // At head level
+            position.x,
+            position.y + cameraBoxSize.y - headHeight / 2, // At head level
             position.z
         ),
         new THREE.Vector3(cameraBoxSize.x, headHeight, cameraBoxSize.z)
@@ -577,9 +577,9 @@ function checkHeadCollision(position) {
 // Function to create collision boxes with proper positioning fixes
 function createCollisionBoxesFromMesh(mesh) {
     mesh.updateMatrixWorld(true);
-    
+
     const box = new THREE.Box3().setFromObject(mesh);
-    
+
     // Expand the box slightly for better collision detection
     box.expandByScalar(collisionMargin);
 
@@ -636,21 +636,21 @@ function adjustCollisionBoxHeight(yOffset) {
         box.max.y += yOffset;
         console.log(`Adjusted collision box ${index} by ${yOffset} units`);
     });
-    
+
     // Update debug visualizations if they exist
     if (window.DEBUG_COLLIDERS) {
         // Remove existing debug boxes
         const debugBoxes = scene.children.filter(child =>
-            child.material && child.material.wireframe && 
+            child.material && child.material.wireframe &&
             (child.material.color.getHex() === 0xff0000 || child.material.color.getHex() === 0x00ff00)
         );
         debugBoxes.forEach(box => scene.remove(box));
-        
+
         // Re-create debug boxes with new positions
         colliderBoxes.forEach((box, index) => {
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
-            
+
             const boxGeometry = new THREE.BoxGeometry(size.x, size.y, size.z);
             const boxMaterial = new THREE.MeshBasicMaterial({
                 color: 0xff0000,
@@ -672,30 +672,30 @@ document.addEventListener('keydown', (e) => {
         // WASD Controls
         case 'KeyW':
         case 'ArrowUp': // Added arrow key support
-            move.forward = true; 
+            move.forward = true;
             break;
         case 'KeyS':
         case 'ArrowDown': // Added arrow key support
-            move.backward = true; 
+            move.backward = true;
             break;
         case 'KeyA':
         case 'ArrowLeft': // Added arrow key support
-            move.left = true; 
+            move.left = true;
             break;
         case 'KeyD':
         case 'ArrowRight': // Added arrow key support
-            move.right = true; 
+            move.right = true;
             break;
         case 'ShiftLeft':
-        case 'ShiftRight': 
-            isRunning = true; 
+        case 'ShiftRight':
+            isRunning = true;
             break;
         case 'Space':
             if (canJump && !isCrouching) {
                 // FIXED: Check for head collision before jumping
                 const headCheck = checkHeadCollision(camera.position);
                 if (!headCheck.collision) {
-                    verticalVelocity = jumpStrength; 
+                    verticalVelocity = jumpStrength;
                     canJump = false;
                     if (isRunning) bunnyHopMultiplier = Math.min(bunnyHopMultiplier * 1.1, maxBunnyHop);
                 } else {
@@ -703,9 +703,9 @@ document.addEventListener('keydown', (e) => {
                 }
             }
             break;
-        case 'AltRight': 
+        case 'AltRight':
         case 'AltLeft':
-            verticalVelocity = 15; 
+            verticalVelocity = 15;
             canJump = true;
             break;
     }
@@ -716,23 +716,23 @@ document.addEventListener('keyup', (e) => {
         // WASD Controls
         case 'KeyW':
         case 'ArrowUp': // Added arrow key support
-            move.forward = false; 
+            move.forward = false;
             break;
         case 'KeyS':
         case 'ArrowDown': // Added arrow key support
-            move.backward = false; 
+            move.backward = false;
             break;
         case 'KeyA':
         case 'ArrowLeft': // Added arrow key support
-            move.left = false; 
+            move.left = false;
             break;
         case 'KeyD':
         case 'ArrowRight': // Added arrow key support
-            move.right = false; 
+            move.right = false;
             break;
         case 'ShiftLeft':
-        case 'ShiftRight': 
-            isRunning = false; 
+        case 'ShiftRight':
+            isRunning = false;
             break;
     }
 });
@@ -760,7 +760,7 @@ function activateFPSControls() {
     orbitControls.enabled = false;
     fpsControls.enabled = true;
     activeControls = fpsControls;
-    camera.position.set(150, -19, 0);
+    camera.position.set(150, -18.5, 0);
     console.log('FPS Controls Activated');
     if (document.getElementById("cameraView")) {
         document.getElementById("cameraView").value = "fps";
@@ -770,7 +770,7 @@ function activateFPSControls() {
 window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyO') activateOrbitControls();
     if (e.code === 'KeyP') activateFPSControls();
-    
+
     // Debug key to toggle collision box visibility
     if (e.code === 'KeyB') {
         window.DEBUG_COLLIDERS = !window.DEBUG_COLLIDERS;
@@ -778,7 +778,7 @@ window.addEventListener('keydown', (e) => {
 
         // Remove existing debug boxes
         const debugBoxes = scene.children.filter(child =>
-            child.material && child.material.wireframe && 
+            child.material && child.material.wireframe &&
             (child.material.color.getHex() === 0xff0000 || child.material.color.getHex() === 0x00ff00)
         );
         debugBoxes.forEach(box => scene.remove(box));
@@ -805,19 +805,19 @@ window.addEventListener('keydown', (e) => {
             });
         }
     }
-    
+
     // Debug collision logging
     if (e.code === 'KeyL') {
         window.DEBUG_COLLISION_LOG = !window.DEBUG_COLLISION_LOG;
         console.log('Collision logging:', window.DEBUG_COLLISION_LOG);
     }
-    
+
     // Show current player position
     if (e.code === 'KeyI') {
         console.log(`Player position: ${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}, ${camera.position.z.toFixed(2)}`);
         console.log(`Ground height: ${groundHeight}`);
         console.log(`Total collision boxes: ${colliderBoxes.length}`);
-        
+
         // Show collision box heights relative to ground
         if (colliderBoxes.length > 0) {
             console.log('Collision box heights relative to ground:');
@@ -829,7 +829,7 @@ window.addEventListener('keydown', (e) => {
             });
         }
     }
-    
+
     // Adjust collision boxes up/down for debugging
     if (e.code === 'ArrowUp') {
         adjustCollisionBoxHeight(1);
@@ -839,7 +839,7 @@ window.addEventListener('keydown', (e) => {
         adjustCollisionBoxHeight(-1);
         console.log('Moved collision boxes down by 1 unit');
     }
-    
+
     // Fine adjustment
     if (e.code === 'PageUp') {
         adjustCollisionBoxHeight(0.1);
@@ -879,12 +879,12 @@ loader.load('/model.glb',
         // Wait a frame for transformations to apply, then create collision boxes
         requestAnimationFrame(() => {
             console.log('Creating collision boxes...');
-            
+
             // Enhanced collision detection setup
             gltf.scene.traverse((child) => {
                 if (child.isMesh) {
                     console.log(`Processing mesh: ${child.name}, position: (${child.position.x.toFixed(2)}, ${child.position.y.toFixed(2)}, ${child.position.z.toFixed(2)})`);
-                    
+
                     // Method 1: Objects with "COLLIDER" in name
                     if (child.name && child.name.includes("COLLIDER")) {
                         collidableObjects.push(child);
@@ -927,7 +927,7 @@ loader.load('/model.glb',
             });
 
             console.log(`Created ${colliderBoxes.length} collision boxes`);
-            
+
             // Debug: Print collision box info
             console.log('Collision box analysis:');
             colliderBoxes.forEach((box, index) => {
@@ -1020,7 +1020,7 @@ function animate() {
         // FIXED: Enhanced gravity and vertical collision
         const prevY = camera.position.y;
         verticalVelocity += gravity * delta;
-        
+
         // Calculate next vertical position
         const nextY = camera.position.y + verticalVelocity * delta;
         const nextPos = new THREE.Vector3(camera.position.x, nextY, camera.position.z);
@@ -1105,10 +1105,10 @@ window.addCollisionBox = function (x, y, z, width, height, depth) {
 window.clearCollisionBoxes = function () {
     colliderBoxes.length = 0;
     console.log('All collision boxes cleared');
-    
+
     // Remove debug visualizations
     const debugBoxes = scene.children.filter(child =>
-        child.material && child.material.wireframe && 
+        child.material && child.material.wireframe &&
         (child.material.color.getHex() === 0xff0000 || child.material.color.getHex() === 0x00ff00)
     );
     debugBoxes.forEach(box => scene.remove(box));
@@ -1116,7 +1116,7 @@ window.clearCollisionBoxes = function () {
 
 // Add helper functions to window for debugging
 window.adjustCollisionHeight = adjustCollisionBoxHeight;
-window.testHeadCollision = function() {
+window.testHeadCollision = function () {
     const headCheck = checkHeadCollision(camera.position);
     console.log('Head collision test:', headCheck.collision);
     if (headCheck.collision) {
@@ -1126,7 +1126,7 @@ window.testHeadCollision = function() {
 };
 
 // Add function to manually test roof collision
-window.testRoofJump = function() {
+window.testRoofJump = function () {
     console.log('Testing roof collision...');
     verticalVelocity = 10; // Strong jump
     canJump = false;
