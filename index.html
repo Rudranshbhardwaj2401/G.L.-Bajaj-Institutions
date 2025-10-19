@@ -970,23 +970,23 @@
             </div>
 
             <div class="initial-control-section">
-                <div class="initial-section-title">Camera Modes</div>
+                <div class="initial-section-title">Movement</div>
                 <div class="initial-control-grid">
                     <div class="initial-control-item">
-                        <div class="initial-control-key">O</div>
-                        <div class="initial-control-desc">Orbit View</div>
+                        <div class="initial-control-key">WASD</div>
+                        <div class="initial-control-desc">Move Around</div>
                     </div>
                     <div class="initial-control-item">
-                        <div class="initial-control-key">P</div>
-                        <div class="initial-control-desc">First Person</div>
+                        <div class="initial-control-key">SPACE</div>
+                        <div class="initial-control-desc">Jump</div>
                     </div>
                     <div class="initial-control-item">
-                        <div class="initial-control-key">T</div>
-                        <div class="initial-control-desc">Third Person</div>
+                        <div class="initial-control-key">SHIFT</div>
+                        <div class="initial-control-desc">Sprint</div>
                     </div>
                     <div class="initial-control-item">
-                        <div class="initial-control-key">F</div>
-                        <div class="initial-control-desc">Enter Car</div>
+                        <div class="initial-control-key">MOUSE</div>
+                        <div class="initial-control-desc">Look Around</div>
                     </div>
                 </div>
             </div>
@@ -1062,16 +1062,8 @@
                 <div class="control-desc">First Person Mode</div>
             </div>
             <div class="control-item">
-                <div class="control-key">T</div>
-                <div class="control-desc">Third Person Mode</div>
-            </div>
-            <div class="control-item">
-                <div class="control-key">F</div>
-                <div class="control-desc">Enter/Exit Car (Third Person)</div>
-            </div>
-            <div class="control-item">
                 <div class="control-key">Click</div>
-                <div class="control-desc">Lock Cursor (FPS/Third Person)</div>
+                <div class="control-desc">Lock Cursor (FPS Mode)</div>
             </div>
         </div>
 
@@ -1246,38 +1238,37 @@
 
         // 1. This function now reliably toggles between Orbit and FPS
         function initDesktopCameraToggle() {
-                const cameraModeButton = document.getElementById('desktopCameraModeButton');
-                let currentMode = 'orbit';
+            const cameraModeButton = document.getElementById('desktopCameraModeButton');
+            let isOrbitMode = true; // Default state is Orbit
 
-                cameraModeButton.addEventListener('click', () => {
-                    if (cameraModeButton.classList.contains('disabled')) {
-                        currentMode = 'orbit';
+            cameraModeButton.addEventListener('click', () => {
+                // Check if the button is disabled (which means we are currently in Views mode)
+                if (cameraModeButton.classList.contains('disabled')) {
+                    // --- REACTIVATION LOGIC ---
+                    // If the button is faded and clicked, we want to exit Views and switch back to Orbit.
+                    isOrbitMode = true; // Reset the state to Orbit.
+                    window.activateOrbitControls(); // This function handles all the UI and camera changes.
+
+                    // Manually update the button's appearance since activateOrbitControls doesn't do it.
+                    cameraModeButton.textContent = 'Orbit Mode';
+                    cameraModeButton.classList.remove('fps-mode');
+
+                } else {
+                    // --- NORMAL TOGGLE LOGIC ---
+                    // If the button is already active, just toggle between Orbit and FPS.
+                    isOrbitMode = !isOrbitMode;
+                    if (isOrbitMode) {
                         window.activateOrbitControls();
                         cameraModeButton.textContent = 'Orbit Mode';
-                        cameraModeButton.classList.remove('fps-mode', 'third-person-mode');
+                        cameraModeButton.classList.remove('fps-mode');
                     } else {
-                        if (currentMode === 'orbit') {
-                            currentMode = 'thirdPerson';
-                            window.activateThirdPersonControls();
-                            cameraModeButton.textContent = 'Third Person';
-                            cameraModeButton.classList.add('third-person-mode');
-                            cameraModeButton.classList.remove('fps-mode');
-                        } else if (currentMode === 'thirdPerson') {
-                            currentMode = 'fps';
-                            window.activateFPSControls();
-                            cameraModeButton.textContent = 'FPS Mode';
-                            cameraModeButton.classList.add('fps-mode');
-                            cameraModeButton.classList.remove('third-person-mode');
-                        } else if (currentMode === 'fps') {
-                            currentMode = 'orbit';
-                            window.activateOrbitControls();
-                            cameraModeButton.textContent = 'Orbit Mode';
-                            cameraModeButton.classList.remove('fps-mode', 'third-person-mode');
-                        }
+                        window.activateFPSControls();
+                        cameraModeButton.textContent = 'FPS Mode';
+                        cameraModeButton.classList.add('fps-mode');
                     }
-                });
-            }
-
+                }
+            });
+        }
 
         // 2. This function for the "Views" button is correct and needs no changes
         function initViewsModeButton() {

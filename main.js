@@ -535,626 +535,6 @@ function activateViewsMode() {
 // Add these lines at the end of your main.js file
 // or after the function definitions.
 
-// ==================== CHARACTER CREATION ====================
-// Add this section after the collision OBB setup and before the animate function
-
-let playerCharacter = null;
-let characterMixer = null;
-let currentAnimation = null;
-const characterAnimations = {};
-
-function createPlayerCharacter() {
-    // This is the main container we will control. Its origin is at the character's feet.
-    const playerContainer = new THREE.Group();
-    playerContainer.name = 'PlayerCharacter';
-
-    // This group holds all the visible parts of the character.
-    // We move it up by 0.6 units so the model's feet are at the container's origin.
-    const characterModel = new THREE.Group();
-    playerContainer.add(characterModel);
-    characterModel.position.y = 0.1;
-
-    // Body (Torso)
-    const bodyGeometry = new THREE.BoxGeometry(0.4, 0.6, 0.25);
-    const bodyMaterial = new THREE.MeshStandardMaterial({
-        color: 0x3498db,
-        roughness: 0.7,
-        metalness: 0.2
-    });
-    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    body.position.y = 0.3;
-    body.castShadow = true;
-    characterModel.add(body); // Add to the model group
-
-    // Head
-    const headGeometry = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-    const headMaterial = new THREE.MeshStandardMaterial({
-        color: 0xffdbac,
-        roughness: 0.8
-    });
-    const head = new THREE.Mesh(headGeometry, headMaterial);
-    head.position.y = 0.725;
-    head.castShadow = true;
-    characterModel.add(head); // Add to the model group
-
-    // Eyes
-    const eyeGeometry = new THREE.BoxGeometry(0.06, 0.06, 0.03);
-    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-
-    const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    leftEye.position.set(-0.06, 0.75, -0.13);
-    characterModel.add(leftEye); // Add to the model group
-
-    const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    rightEye.position.set(0.06, 0.75, -0.13);
-    characterModel.add(rightEye); // Add to the model group
-
-    // Backpack (Detail)
-    const backpackGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.15);
-    const backpackMaterial = new THREE.MeshStandardMaterial({
-        color: 0x2c3e50,
-        roughness: 0.9
-    });
-    const backpack = new THREE.Mesh(backpackGeometry, backpackMaterial);
-    backpack.position.set(0, 0.35, 0.2);
-    backpack.castShadow = true;
-    characterModel.add(backpack); // Add to the model group
-
-    // Arms
-    const armGeometry = new THREE.BoxGeometry(0.15, 0.5, 0.15);
-    const armMaterial = new THREE.MeshStandardMaterial({
-        color: 0x3498db,
-        roughness: 0.7
-    });
-
-    const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-    leftArm.position.set(-0.275, 0.25, 0);
-    leftArm.name = 'leftArm';
-    leftArm.castShadow = true;
-    characterModel.add(leftArm); // Add to the model group
-
-    const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-    rightArm.position.set(0.275, 0.25, 0);
-    rightArm.name = 'rightArm';
-    rightArm.castShadow = true;
-    characterModel.add(rightArm); // Add to the model group
-
-    // Legs
-    const legGeometry = new THREE.BoxGeometry(0.15, 0.5, 0.15);
-    const legMaterial = new THREE.MeshStandardMaterial({
-        color: 0x2c3e50,
-        roughness: 0.8
-    });
-
-    const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-    leftLeg.position.set(-0.1, -0.25, 0);
-    leftLeg.name = 'leftLeg';
-    leftLeg.castShadow = true;
-    characterModel.add(leftLeg); // Add to the model group
-
-    const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-    rightLeg.position.set(0.1, -0.25, 0);
-    rightLeg.name = 'rightLeg';
-    rightLeg.castShadow = true;
-    characterModel.add(rightLeg); // Add to the model group
-
-    // Feet
-    const footGeometry = new THREE.BoxGeometry(0.15, 0.1, 0.2);
-    const footMaterial = new THREE.MeshStandardMaterial({
-        color: 0x1a1a1a,
-        roughness: 0.9
-    });
-
-    const leftFoot = new THREE.Mesh(footGeometry, footMaterial);
-    leftFoot.position.set(-0.1, -0.55, -0.025);
-    leftFoot.castShadow = true;
-    characterModel.add(leftFoot); // Add to the model group
-
-    const rightFoot = new THREE.Mesh(footGeometry, footMaterial);
-    rightFoot.position.set(0.1, -0.55, -0.025);
-    rightFoot.castShadow = true;
-    characterModel.add(rightFoot); // Add to the model group
-
-    playerContainer.visible = false;
-    scene.add(playerContainer);
-    playerCharacter = playerContainer; // The global variable now correctly points to the container
-
-    return playerContainer;
-}
-
-// Simple animation system for character
-// In main.js, replace the entire old animateCharacter function with this one.
-
-// Replace your old animateCharacter function with this one.
-
-function animateCharacter(action, delta) {
-    if (!playerCharacter) return;
-
-    // Get the visual model, which is the child of the physics container
-    const characterModel = playerCharacter.children[0];
-    if (!characterModel) return; // Safety check
-
-    const leftArm = playerCharacter.getObjectByName('leftArm');
-    const rightArm = playerCharacter.getObjectByName('rightArm');
-    const leftLeg = playerCharacter.getObjectByName('leftLeg');
-    const rightLeg = playerCharacter.getObjectByName('rightLeg');
-
-    const time = clock.getElapsedTime();
-
-    // =========================================================
-    // ✅ STEP 2: DEFINE THE BASE HEIGHT FOR ANIMATION
-    // This is the same value from Step 1.
-    const baseHeight = 0.1;
-    // =========================================================
-
-    if (action === 'walking' || action === 'running') {
-        const speed = action === 'running' ? 12 : 8;
-        const armSwing = action === 'running' ? 0.6 : 0.4;
-        const legSwing = action === 'running' ? 0.8 : 0.5;
-
-        // Swing arms
-        leftArm.rotation.x = Math.sin(time * speed) * armSwing;
-        rightArm.rotation.x = Math.sin(time * speed + Math.PI) * armSwing;
-
-        // Swing legs
-        leftLeg.rotation.x = Math.sin(time * speed) * legSwing;
-        rightLeg.rotation.x = Math.sin(time * speed + Math.PI) * legSwing;
-
-        // Add the bobbing animation ON TOP of the base height.
-        characterModel.position.y = baseHeight + (Math.abs(Math.sin(time * speed * 2)) * 0.05);
-
-    } else if (action === 'idle') {
-        // Return to neutral pose smoothly
-        leftArm.rotation.x *= 0.9;
-        rightArm.rotation.x *= 0.9;
-        leftLeg.rotation.x *= 0.9;
-        rightLeg.rotation.x *= 0.9;
-
-        // Add the breathing animation ON TOP of the base height.
-        characterModel.position.y = baseHeight + (Math.sin(time * 2) * 0.02);
-    }
-}
-// ==================== CAR CREATION ====================
-
-let interactiveCar = null;
-let isInCar = false;
-let carInteractionPrompt = null;
-
-function createCar() {
-    const car = new THREE.Group();
-    car.name = 'InteractiveCar';
-
-    // Car body
-    const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
-    const bodyMaterial = new THREE.MeshStandardMaterial({
-        color: 0xe74c3c,
-        roughness: 0.3,
-        metalness: 0.7
-    });
-    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    body.position.y = 0.4;
-    body.castShadow = true;
-    car.add(body);
-
-    // Cabin/Roof
-    const cabinGeometry = new THREE.BoxGeometry(1.6, 0.6, 2.2);
-    const cabinMaterial = new THREE.MeshStandardMaterial({
-        color: 0xe74c3c,
-        roughness: 0.3,
-        metalness: 0.7
-    });
-    const cabin = new THREE.Mesh(cabinGeometry, cabinMaterial);
-    cabin.position.set(0, 1.1, -0.3);
-    cabin.castShadow = true;
-    car.add(cabin);
-
-    // Windows (darker glass effect)
-    const windowMaterial = new THREE.MeshStandardMaterial({
-        color: 0x1a1a2e,
-        roughness: 0.1,
-        metalness: 0.9,
-        transparent: true,
-        opacity: 0.6
-    });
-
-    // Front windshield
-    const frontWindowGeometry = new THREE.BoxGeometry(1.55, 0.5, 0.05);
-    const frontWindow = new THREE.Mesh(frontWindowGeometry, windowMaterial);
-    frontWindow.position.set(0, 1.15, 0.775);
-    frontWindow.rotation.x = -0.2;
-    car.add(frontWindow);
-
-    // Back windshield
-    const backWindow = new THREE.Mesh(frontWindowGeometry, windowMaterial);
-    backWindow.position.set(0, 1.15, -1.375);
-    backWindow.rotation.x = 0.2;
-    car.add(backWindow);
-
-    // Side windows
-    const sideWindowGeometry = new THREE.BoxGeometry(0.05, 0.45, 1.8);
-    const leftWindow = new THREE.Mesh(sideWindowGeometry, windowMaterial);
-    leftWindow.position.set(-0.775, 1.15, -0.3);
-    car.add(leftWindow);
-
-    const rightWindow = new THREE.Mesh(sideWindowGeometry, windowMaterial);
-    rightWindow.position.set(0.775, 1.15, -0.3);
-    car.add(rightWindow);
-
-    // Wheels
-    const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.3, 16);
-    const wheelMaterial = new THREE.MeshStandardMaterial({
-        color: 0x1a1a1a,
-        roughness: 0.8
-    });
-
-    const wheelPositions = [
-        { x: -0.9, z: 1.2 },  // Front left
-        { x: 0.9, z: 1.2 },   // Front right
-        { x: -0.9, z: -1.2 }, // Back left
-        { x: 0.9, z: -1.2 }   // Back right
-    ];
-
-    wheelPositions.forEach((pos, index) => {
-        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-        wheel.position.set(pos.x, 0.3, pos.z);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.name = `wheel${index}`;
-        wheel.castShadow = true;
-        car.add(wheel);
-
-        // Hubcap detail
-        const hubcapGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.05, 8);
-        const hubcapMaterial = new THREE.MeshStandardMaterial({
-            color: 0x888888,
-            metalness: 0.8,
-            roughness: 0.2
-        });
-        const hubcap = new THREE.Mesh(hubcapGeometry, hubcapMaterial);
-        hubcap.position.copy(wheel.position);
-        hubcap.position.x += pos.x > 0 ? 0.18 : -0.18;
-        hubcap.rotation.z = Math.PI / 2;
-        car.add(hubcap);
-    });
-
-    // Headlights
-    const headlightGeometry = new THREE.BoxGeometry(0.3, 0.15, 0.1);
-    const headlightMaterial = new THREE.MeshStandardMaterial({
-        color: 0xffffaa,
-        emissive: 0xffffaa,
-        emissiveIntensity: 0.5
-    });
-
-    const leftHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
-    leftHeadlight.position.set(-0.6, 0.4, 2.05);
-    car.add(leftHeadlight);
-
-    const rightHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
-    rightHeadlight.position.set(0.6, 0.4, 2.05);
-    car.add(rightHeadlight);
-
-    // Taillights
-    const taillightMaterial = new THREE.MeshStandardMaterial({
-        color: 0xff0000,
-        emissive: 0xff0000,
-        emissiveIntensity: 0.3
-    });
-
-    const leftTaillight = new THREE.Mesh(headlightGeometry, taillightMaterial);
-    leftTaillight.position.set(-0.6, 0.5, -2.05);
-    car.add(leftTaillight);
-
-    const rightTaillight = new THREE.Mesh(headlightGeometry, taillightMaterial);
-    rightTaillight.position.set(0.6, 0.5, -2.05);
-    car.add(rightTaillight);
-
-    // Grille
-    const grilleGeometry = new THREE.BoxGeometry(1.4, 0.2, 0.05);
-    const grilleMaterial = new THREE.MeshStandardMaterial({
-        color: 0x1a1a1a,
-        roughness: 0.7,
-        metalness: 0.5
-    });
-    const grille = new THREE.Mesh(grilleGeometry, grilleMaterial);
-    grille.position.set(0, 0.25, 2.03);
-    car.add(grille);
-
-    // Position car in the scene (near main entrance)
-    car.position.set(150, 0, 0);
-    car.rotation.y = Math.PI / 2;
-
-    scene.add(car);
-    interactiveCar = car;
-
-    // In the createCar function...
-
-    scene.add(car);
-    interactiveCar = car;
-
-    // ==================== FIX IS HERE ====================
-    // Create a collision box (OBB) that matches the car's dimensions
-    console.log('Creating car collision box...');
-    const carBox = new THREE.Box3().setFromObject(car);
-    const carSize = new THREE.Vector3();
-    carBox.getSize(carSize);
-
-    // We use the car's actual center and half-size (extents) to create the OBB
-    carOBB = new OBB(
-        car.position.clone(),
-        carSize.multiplyScalar(0.5),
-        car.rotation.clone()
-    );
-    // ================== END OF FIX ===================
-
-
-
-    return car;
-}
-
-// Create interaction prompt
-function createCarInteractionPrompt() {
-    const prompt = document.createElement('div');
-    prompt.id = 'carInteractionPrompt';
-    prompt.style.cssText = `
-        position: fixed;
-        bottom: 15vh;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 15px 30px;
-        border-radius: 10px;
-        font-family: 'Orbitron', monospace;
-        font-weight: bold;
-        font-size: 18px;
-        z-index: 10000;
-        display: none;
-        pointer-events: none;
-        user-select: none;
-        border: 2px solid rgba(231, 76, 60, 0.8);
-        box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
-        animation: pulse 1.5s ease-in-out infinite;
-    `;
-    prompt.innerHTML = 'Press <span style="color: #e74c3c;">F</span> to Enter Car';
-
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes pulse {
-            0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.05); }
-        }
-    `;
-    document.head.appendChild(style);
-
-    document.body.appendChild(prompt);
-    carInteractionPrompt = prompt;
-}
-
-// Check if player is near car
-// In main.js
-
-// Check if player is near car (CORRECTED)
-function checkCarProximity() {
-    // Safety check: Don't run if assets aren't ready or not in the right mode
-    if (!interactiveCar || !playerCharacter || activeControls !== thirdPersonControls || isInCar) {
-        if (carInteractionPrompt) carInteractionPrompt.style.display = 'none';
-        return;
-    }
-
-    // FIXED: Calculate distance from the PLAYER CHARACTER to the car
-    const distance = playerCharacter.position.distanceTo(interactiveCar.position);
-    const interactionDistance = 5; // How close you need to be
-
-    if (distance < interactionDistance) {
-        carInteractionPrompt.style.display = 'block';
-    } else {
-        carInteractionPrompt.style.display = 'none';
-    }
-}
-
-// Car driving controls
-let carVelocity = new THREE.Vector3();
-let carSpeed = 0;
-let carMaxSpeed = 20;
-let carAcceleration = 8;
-let carRotationSpeed = 2;
-
-// In main.js, replace your entire updateCarControls function with this one.
-
-// In main.js, replace your old updateCarControls function with this one.
-
-function updateCarControls(delta) {
-    if (!isInCar || !interactiveCar || !carOBB) return;
-
-    // First, update the car's collision box to its current position and rotation.
-    // This is crucial for accurate checks in the current frame.
-    carOBB.center.copy(interactiveCar.position);
-    carOBB.rotation.copy(interactiveCar.rotation);
-    carOBB.updateAxes();
-
-    // --- Acceleration and Rotation (This part is unchanged) ---
-    if (move.forward) {
-        carSpeed = Math.min(carSpeed + carAcceleration * delta, carMaxSpeed);
-    } else if (move.backward) {
-        carSpeed = Math.max(carSpeed - carAcceleration * delta, -carMaxSpeed * 0.5);
-    } else {
-        carSpeed *= 0.95;
-        if (Math.abs(carSpeed) < 0.1) carSpeed = 0;
-    }
-    if ((move.left || move.right) && Math.abs(carSpeed) > 0.5) {
-        const turnDirection = move.left ? 1 : -1;
-        interactiveCar.rotation.y += carRotationSpeed * delta * turnDirection;
-    }
-
-    // --- Movement and Collision Logic ---
-    const direction = new THREE.Vector3(0, 0, 1);
-    direction.applyQuaternion(interactiveCar.quaternion);
-
-    const movement = direction.multiplyScalar(carSpeed * delta);
-    const desiredPosition = interactiveCar.position.clone().add(movement);
-
-    // =================================================================
-    // ✅ THE FIX: CHECK FOR COLLISIONS BEFORE MOVING
-    // =================================================================
-    // Use our new function to check if the desired position hits a wall.
-    if (!checkCarCollision(desiredPosition, interactiveCar.rotation)) {
-        // If the path is clear, update the car's position.
-        interactiveCar.position.copy(desiredPosition);
-    } else {
-        // If a wall was hit, stop the car immediately.
-        carSpeed = 0;
-    }
-
-    // This "snap to ground" is still our gravity, keeping the car on the road.
-    interactiveCar.position.y = 0.3;
-    // =================================================================
-
-    // Animate the wheels
-    for (let i = 0; i < 4; i++) {
-        const wheel = interactiveCar.getObjectByName(`wheel${i}`);
-        if (wheel) {
-            wheel.rotation.x += carSpeed * delta * 2;
-        }
-    }
-
-    // IMPORTANT: Remove the call to updateCarCamera() from here.
-    // Your animate() loop already handles this correctly.
-}
-
-// In main.js, replace your old updateCarCamera function with this one.
-
-// In main.js, replace your entire updateCarCamera function with this one.
-
-function updateCarCamera() {
-    if (!interactiveCar) return; // Safety check
-
-    // =================================================================
-    // ✅ THIS IS THE NEW, FIXED "FOLLOW" CAMERA LOGIC
-    // =================================================================
-
-    // 1. Define the desired camera offset from the car IN THE CAR'S LOCAL SPACE.
-    //    x: 0   = directly behind the car's center
-    //    y: 4   = 4 units above the car's center
-    //    z: -8  = 8 units BEHIND the car
-    const offset = new THREE.Vector3(0, 4, -8);
-
-    // 2. Apply the car's current world rotation to this offset.
-    //    This is the crucial step that makes the camera rotate WITH the car.
-    offset.applyQuaternion(interactiveCar.quaternion);
-
-    // 3. Add the rotated offset to the car's current world position.
-    //    This gives us the final desired world position for the camera.
-    const desiredCameraPosition = interactiveCar.position.clone().add(offset);
-
-    // 4. Smoothly interpolate the camera's position towards the desired position.
-    //    This prevents jerky camera movement. A lower value is smoother.
-    const smoothness = 0.05;
-    camera.position.lerp(desiredCameraPosition, smoothness);
-
-    // 5. Make the camera always look at a point slightly above the car's base.
-    const lookAtTarget = interactiveCar.position.clone();
-    lookAtTarget.y += 1.0; // Aim at the car's body, not its wheels
-    camera.lookAt(lookAtTarget);
-}
-let isTransitioningCar = false; // Tracks the car entry/exit animation
-// Enter/Exit car functionality
-// In main.js, replace your old toggleCarEntry function with this one.
-
-// In main.js, replace your old toggleCarEntry function with this one.
-
-function toggleCarEntry() {
-    if (isTransitioningCar || !interactiveCar || activeControls !== thirdPersonControls) return;
-
-    // Using playerCharacter distance is correct.
-    const distance = playerCharacter.position.distanceTo(interactiveCar.position);
-    const interactionDistance = 5;
-
-    // --- LOGIC TO ENTER THE CAR ---
-    if (!isInCar && distance < interactionDistance) {
-        // This part remains the same
-        isTransitioningCar = true;
-        carInteractionPrompt.style.display = 'none';
-        const doorOffset = new THREE.Vector3(-1.5, 0, 0.5);
-        doorOffset.applyQuaternion(interactiveCar.quaternion);
-        const targetPosition = interactiveCar.position.clone().add(doorOffset);
-
-        new TWEEN.Tween(playerCharacter.position)
-            .to(targetPosition, 1000)
-            .easing(TWEEN.Easing.Quadratic.InOut)
-            .onUpdate(() => { playerCharacter.lookAt(interactiveCar.position); })
-            .onComplete(() => {
-                isInCar = true;
-                playerCharacter.visible = false;
-                carInteractionPrompt.innerHTML = 'Press <span style="color: #e74c3c;">F</span> to Exit Car';
-                isTransitioningCar = false;
-                console.log('Entered car');
-            })
-            .start();
-    }
-    // --- LOGIC TO EXIT THE CAR ---
-    else if (isInCar) {
-        // This part has the crucial new code
-        isTransitioningCar = true;
-
-        const exitOffset = new THREE.Vector3(3, 0, 0); // Exit to the car's right side
-        exitOffset.applyQuaternion(interactiveCar.quaternion);
-        const exitPosition = interactiveCar.position.clone().add(exitOffset);
-        exitPosition.y = 0.5;
-
-        playerCharacter.position.copy(exitPosition);
-        playerCharacter.visible = true;
-
-        isInCar = false;
-        carSpeed = 0;
-        carInteractionPrompt.innerHTML = 'Press <span style="color: #e74c3c;">F</span> to Enter Car';
-
-        // =================================================================
-        // ✅ THE FIX: RE-SYNCHRONIZE THE CAMERA AND PLAYER STATE
-        // =================================================================
-        // 1. Set the character's rotation. A good default is to face the same direction the car is facing.
-        playerCharacter.rotation.y = interactiveCar.rotation.y;
-
-        // 2. CRUCIAL: Force the camera controller's internal `yaw` to match the character's new rotation.
-        thirdPersonControls.yaw = playerCharacter.rotation.y;
-
-        // 3. Reset the camera's vertical `pitch` to a neutral, over-the-shoulder angle.
-        thirdPersonControls.pitch = 0.4; // This is a good default value.
-        // =================================================================
-
-        setTimeout(() => {
-            isTransitioningCar = false;
-            console.log('Exited car');
-        }, 300);
-    }
-}
-
-// Add F key listener for car interaction
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyF') {
-        e.preventDefault();
-        toggleCarEntry();
-    }
-});
-
-// Initialize car and character (call this after model loads)
-// In main.js
-
-function initializeThirdPersonAssets() {
-    createPlayerCharacter();
-
-    // ================== FIX IS HERE ==================
-    // Assign the newly created character to the controls instance
-    thirdPersonControls.character = playerCharacter;
-    // ================== END OF FIX ===================
-
-    createCar();
-    createCarInteractionPrompt();
-    console.log('Third person assets initialized');
-}
-
-// Call this in your GLTF loader success callback
-// Add after: scene.add(gltf.scene);
-// initializeThirdPersonAssets();
-
 window.activateOrbitControls = activateOrbitControls;
 window.activateFPSControls = activateFPSControls;
 window.activateViewsMode = activateViewsMode;
@@ -1245,8 +625,6 @@ let groundHeight = 1.85;
 const collisionOBBs = [];
 
 let playerOBB;
-let carOBB; // Add this line for the car's collision box
-
 
 // Player collision properties
 const playerRadius = 0.3;
@@ -1443,204 +821,6 @@ function addToOBBCollision(mesh) {
 
     }
 }
-
-// ==================== THIRD PERSON CONTROLS ====================
-// Add this section after the FPS and Orbit controls initialization
-
-// ==================== THIRD PERSON CONTROLS (GTA STYLE) ====================
-
-// ==================== THIRD PERSON CONTROLS (GTA STYLE) ====================
-
-
-// Add this entire new function to your code.
-
-// Add this entire new function to your code.
-
-function checkCarCollision(desiredPosition, currentRotation) {
-    if (!carOBB) return false;
-
-    const testOBB = new OBB(
-        desiredPosition,
-        carOBB.extents.clone(),
-        currentRotation.clone()
-    );
-
-    for (const obb of collisionOBBs) {
-        // ==================== THE FIX IS HERE ====================
-        // Heuristic to determine if the object is a "road" vs. a "small obstacle"
-        const surfaceArea = obb.extents.x * obb.extents.z * 4; // Calculate full surface area
-
-        // A "road" is an object that is very thin AND has a large surface area.
-        const isLikelyRoad = obb.extents.y < 0.5 && surfaceArea > 50;
-
-        // If it's a road, SKIP the collision check.
-        // Hedges are small and will fail the surfaceArea > 50 check, so they will be treated as obstacles.
-        if (isLikelyRoad) {
-            continue;
-        }
-        // ================== END OF FIX ===================
-
-        // For all other objects (walls, hedges, etc.), check for intersection.
-        if (testOBB.intersectsOBB(obb)) {
-            console.log('Car collision detected with an obstacle.');
-            return true; // A collision was found.
-        }
-    }
-
-    return false; // No collisions were found. The path is clear.
-}
-
-class ThirdPersonControls {
-    constructor(camera, character, domElement) {
-        this.camera = camera;
-        this.character = character;
-        this.domElement = domElement;
-        this.enabled = false;
-
-        // Camera settings
-        this.cameraDistance = 6;
-        this.cameraHeight = 2.5;
-        this.cameraSmoothness = 0.1; // Lower is smoother
-        this.mouseSensitivity = 0.003;
-
-        // Camera rotation state
-        this.yaw = 0; // Horizontal rotation (around Y axis)
-        this.pitch = 0.4; // Vertical rotation (around X axis)
-
-        // Pitch limits (to prevent camera flipping)
-        this.minPitch = -0.1; // Looking slightly up
-        this.maxPitch = Math.PI / 2 - 0.2; // Looking down
-
-        this.isPointerLocked = false;
-
-        this.setupEventListeners();
-    }
-
-    setupEventListeners() {
-        this.onMouseMove = this.onMouseMove.bind(this);
-        this.onPointerLockChange = this.onPointerLockChange.bind(this);
-
-        this.domElement.addEventListener('mousemove', this.onMouseMove);
-        document.addEventListener('pointerlockchange', this.onPointerLockChange);
-    }
-
-    onPointerLockChange() {
-        this.isPointerLocked = document.pointerLockElement === this.domElement;
-    }
-
-    onMouseMove(event) {
-        if (!this.enabled || !this.isPointerLocked) return;
-
-        // Update camera rotation based on mouse movement
-        this.yaw -= event.movementX * this.mouseSensitivity;
-        this.pitch -= event.movementY * this.mouseSensitivity;
-
-        // Clamp the pitch to avoid flipping the camera
-        this.pitch = Math.max(this.minPitch, Math.min(this.maxPitch, this.pitch));
-    }
-
-    update() {
-        if (!this.enabled || !this.character) return;
-
-        // --- 1. Calculate Ideal Camera Position ---
-        const targetPosition = this.character.position.clone();
-
-        const horizontalDistance = this.cameraDistance * Math.cos(this.pitch);
-        const verticalDistance = this.cameraDistance * Math.sin(this.pitch);
-
-        const offsetX = horizontalDistance * Math.sin(this.yaw);
-        const offsetZ = horizontalDistance * Math.cos(this.yaw);
-
-        targetPosition.x += offsetX;
-        targetPosition.y += this.cameraHeight + verticalDistance;
-        targetPosition.z += offsetZ;
-
-        // --- 2. Smoothly Move Camera to Target ---
-        this.camera.position.lerp(targetPosition, this.cameraSmoothness);
-
-        // --- 3. Point Camera at the Character ---
-        const lookAtTarget = this.character.position.clone();
-        lookAtTarget.y += 1.0;
-        this.camera.lookAt(lookAtTarget);
-    }
-
-    // ================== FIX IS HERE ==================
-    // Get the forward vector relative to the camera's yaw (CORRECTED)
-    getForwardVector() {
-        // We use -sin and -cos to align with the camera's perspective
-        return new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw)).normalize();
-    }
-
-    // Get the right vector relative to the camera's yaw (CORRECTED)
-    getRightVector() {
-        // Rotated 90 degrees from the corrected forward vector
-        return new THREE.Vector3(-Math.cos(this.yaw), 0, Math.sin(this.yaw)).normalize();
-    }
-    // ================== END OF FIX ===================
-
-    lock() {
-        this.domElement.requestPointerLock();
-    }
-
-    unlock() {
-        document.exitPointerLock();
-    }
-}
-
-// Create third person controls instance (this part remains the same)
-const thirdPersonControls = new ThirdPersonControls(camera, playerCharacter, renderer.domElement);
-
-// Update the activateThirdPersonControls function
-function activateThirdPersonControls() {
-    document.getElementById('viewsContainer')?.classList.remove('show');
-    document.getElementById('desktopCameraModeButton')?.classList.remove('disabled');
-    document.getElementById('viewsModeButton')?.classList.add('disabled');
-
-    isTweeningCamera = false;
-    crosshair.style.display = 'block'; // Show a crosshair/dot
-    showEscHint();
-
-    // Disable other controls
-    orbitControls.enabled = false;
-    orbitControls.autoRotate = false;
-    fpsControls.enabled = false;
-    if (fpsControls.isLocked) fpsControls.unlock();
-
-    // Enable third person controls
-    thirdPersonControls.enabled = true;
-    activeControls = thirdPersonControls;
-    thirdPersonControls.lock();
-    if (!playerOBB) {
-        initializePlayerOBB();
-    }
-    // Make the character visible and set its initial position
-    if (playerCharacter) {
-        playerCharacter.visible = true;
-        // Start near the car or a known location
-        playerCharacter.position.set(145, groundHeight, -5);
-        camera.position.copy(playerCharacter.position); // Sync camera initially
-    }
-
-    // Hide car prompt initially
-    if (carInteractionPrompt) {
-        carInteractionPrompt.style.display = 'none';
-    }
-
-    console.log('GTA-Style Third Person Controls Activated');
-}
-
-// Expose globally for button usage
-window.activateThirdPersonControls = activateThirdPersonControls;
-
-// Update keyboard controls to include T key for third person
-window.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyT') {
-        activateThirdPersonControls();
-    }
-});
-
-// Expose globally for button usage
-window.activateThirdPersonControls = activateThirdPersonControls;
 
 // --------------------- MOBILE CONTROLS ---------------------
 let isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -2174,14 +1354,22 @@ document.addEventListener('keydown', (e) => {
             isRunning = true;
             break;
         case 'Space':
-            // Set the generic jump flag. The animate() loop will handle the logic.
-            jumpPressed = true;
+            if (canJump && !(false)) {
+                const headCheck = checkVerticalCollisionOBB(
+                    new THREE.Vector3(camera.position.x, camera.position.y + jumpStrength * 0.1, camera.position.z),
+                    'up'
+                );
+                if (!headCheck.collision) {
+                    verticalVelocity = jumpStrength;
+                    canJump = false;
+                    if (isRunning) bunnyHopMultiplier = Math.min(bunnyHopMultiplier * 1.1, maxBunnyHop);
+                } else {
+                    console.log('Cannot jump - head collision detected');
+                }
+            }
             break;
-
         case 'AltRight':
         case 'AltLeft':
-            // This "super jump" works for both modes because it directly affects
-            // verticalVelocity, which is used by both controllers' physics.
             verticalVelocity = 15;
             canJump = true;
             break;
@@ -2190,19 +1378,26 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('keyup', (e) => {
     switch (e.code) {
-        // Movement keys (no change)
-        case 'KeyW': case 'ArrowUp': move.forward = false; break;
-        case 'KeyS': case 'ArrowDown': move.backward = false; break;
-        case 'KeyA': case 'ArrowLeft': move.left = false; break;
-        case 'KeyD': case 'ArrowRight': move.right = false; break;
-        case 'ShiftLeft': case 'ShiftRight': isRunning = false; break;
-
-        // ==================== FIX IS HERE ====================
-        case 'Space':
-            // Reset the jump flag when the key is released
-            jumpPressed = false;
+        case 'KeyW':
+        case 'ArrowUp':
+            move.forward = false;
             break;
-        // ================== END OF FIX ===================
+        case 'KeyS':
+        case 'ArrowDown':
+            move.backward = false;
+            break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            move.left = false;
+            break;
+        case 'KeyD':
+        case 'ArrowRight':
+            move.right = false;
+            break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+            isRunning = false;
+            break;
     }
 });
 
@@ -2674,21 +1869,20 @@ function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
     TWEEN.update();
+    // --- REPLACE THE OLD isTweeningCamera BLOCK WITH THIS ---
 
-    // FPS Mode
     if (activeControls === fpsControls) {
+        // ... (rest of your animate function for FPS mode is fine)
         const originalPosition = camera.position.clone();
         updateAreaPrompt();
         updatePlayerOBB();
         velocity.set(0, 0, 0);
         direction.set(0, 0, 0);
-
         if (move.forward) direction.z -= 1;
         if (move.backward) direction.z += 1;
         if (move.left) direction.x -= 1;
         if (move.right) direction.x += 1;
         direction.normalize();
-
         const currentSpeed = (isRunning ? runSpeed : baseSpeed) * bunnyHopMultiplier;
         const moveDistance = currentSpeed * delta;
         const forward = new THREE.Vector3();
@@ -2698,36 +1892,21 @@ function animate() {
         forward.normalize();
         right.crossVectors(forward, new THREE.Vector3(0, 1, 0));
         right.normalize();
-
         const currentPos = camera.position.clone();
         const desiredPos = currentPos.clone();
         desiredPos.add(forward.clone().multiplyScalar(-direction.z * moveDistance));
         desiredPos.add(right.clone().multiplyScalar(direction.x * moveDistance));
-
         const validPos = getValidMovementOBB(currentPos, desiredPos);
         camera.position.copy(validPos);
-
-        if (jumpPressed && canJump) {
-            const headCheck = checkVerticalCollisionOBB(
-                new THREE.Vector3(camera.position.x, camera.position.y + jumpStrength * 0.1, camera.position.z),
-                'up'
-            );
-            if (!headCheck.collision) {
-                verticalVelocity = jumpStrength;
-                canJump = false;
-                if (isRunning) bunnyHopMultiplier = Math.min(bunnyHopMultiplier * 1.1, maxBunnyHop);
-            }
-        }
-
         verticalVelocity += gravity * delta;
         const nextY = camera.position.y + verticalVelocity * delta;
         const nextPos = new THREE.Vector3(camera.position.x, nextY, camera.position.z);
-
         if (verticalVelocity > 0) {
             const upCheck = checkVerticalCollisionOBB(nextPos, 'up');
             if (upCheck.collision) {
                 verticalVelocity = 0;
                 camera.position.y = upCheck.height - playerHeight - 0.1;
+                console.log('Head hit ceiling at Y:', upCheck.height);
             } else {
                 camera.position.y = nextY;
             }
@@ -2744,8 +1923,7 @@ function animate() {
                 camera.position.y = nextY;
             }
         }
-
-        let currentGround = groundHeight;
+        let currentGround = (false) ? groundHeight + crouchOffset : groundHeight;
         if (camera.position.y <= currentGround) {
             camera.position.y = currentGround;
             verticalVelocity = 0;
@@ -2754,152 +1932,37 @@ function animate() {
                 bunnyHopMultiplier = 1;
             }
         }
-
         checkLandingShake();
         updateMovementShake();
         calculateCameraShake(delta);
         if (cameraShake.shakeOffset.lengthSq() > 0) {
             camera.position.add(cameraShake.shakeOffset);
         }
-    }
-
-    // In your animate() function, replace the entire third-person block with this:
-
-    else if (activeControls === thirdPersonControls) {
-
-        // --- NEW LOGIC SEPARATION ---
-        if (isInCar) {
-            // WHEN IN THE CAR:
-            // 1. Run the car's physics (responds to keyboard).
-            updateCarControls(delta);
-
-            // 2. Run the special orbiting car camera (responds to mouse).
-            updateCarCamera();
-
-        } else {
-            // WHEN ON FOOT:
-            // Run the original character controls and camera (mouse controls camera and character direction).
-            thirdPersonControls.update();
-            checkCarProximity(); // Only check proximity when on foot
-
-            // The rest of your existing character-on-foot logic goes here
-            if (playerCharacter) {
-                if (isTransitioningCar) return;
-
-                playerCharacter.rotation.y = thirdPersonControls.yaw;
-
-                // (Your existing character movement and gravity code here...)
-                // ... (I have omitted it for brevity, but make sure it stays here)
-                const moveDirection = new THREE.Vector3();
-                let isMoving = false;
-                if (move.forward) { moveDirection.z = -1; isMoving = true; }
-                if (move.backward) { moveDirection.z = 1; isMoving = true; }
-                if (move.left) { moveDirection.x = -1; isMoving = true; }
-                if (move.right) { moveDirection.x = 1; isMoving = true; }
-                if (isMoving) {
-                    moveDirection.normalize();
-                    moveDirection.applyQuaternion(playerCharacter.quaternion);
-                    const currentSpeed = isRunning ? runSpeed : baseSpeed;
-                    const moveDistance = currentSpeed * delta;
-                    const currentPos = playerCharacter.position.clone();
-                    const desiredPos = currentPos.clone().add(moveDirection.multiplyScalar(moveDistance));
-                    const cameraEquivPos = new THREE.Vector3(desiredPos.x, desiredPos.y + cameraEyeHeight, desiredPos.z);
-                    if (!checkHorizontalCollisionOBB(cameraEquivPos)) {
-                        playerCharacter.position.copy(desiredPos);
-                    }
-                }
-                verticalVelocity += gravity * delta;
-                const nextCharacterY = playerCharacter.position.y + verticalVelocity * delta;
-                const nextCameraPos = new THREE.Vector3(playerCharacter.position.x, nextCharacterY + cameraEyeHeight, playerCharacter.position.z);
-                const downCheck = checkVerticalCollisionOBB(nextCameraPos, 'down');
-                if (downCheck.collision) {
-                    const groundCharacterY = downCheck.height - cameraEyeHeight - playerFeetOffset;
-                    if (playerCharacter.position.y <= groundCharacterY + 0.1) {
-                        verticalVelocity = 0;
-                        canJump = true;
-                        playerCharacter.position.y = groundCharacterY;
-                    } else {
-                        canJump = false;
-                        playerCharacter.position.y = nextCharacterY;
-                    }
-                } else {
-                    canJump = false;
-                    playerCharacter.position.y = nextCharacterY;
-                }
-                const characterGroundLevel = 0.5;
-                if (playerCharacter.position.y < characterGroundLevel) {
-                    playerCharacter.position.y = characterGroundLevel;
-                    verticalVelocity = 0;
-                    canJump = true;
-                }
-                animateCharacter(isMoving ? (isRunning ? 'running' : 'walking') : 'idle', delta);
-            }
-        }
-        // --- END OF NEW LOGIC ---
-    }
-    // Orbit Mode
-    else {
+    } else {
+        // This update handles user input when not tweening
         if (!isTweeningCamera) {
             orbitControls.update();
         }
     }
-
     updateDynamicDebugOBBs();
+
     renderer.render(scene, camera);
 
-    // Remove shake offset after rendering (FPS only)
     if (activeControls === fpsControls && cameraShake.shakeOffset.lengthSq() > 0) {
         camera.position.sub(cameraShake.shakeOffset);
     }
 
-    // Handle jump for third person
-    if (jumpPressed && canJump && activeControls === thirdPersonControls && !isInCar) {
-        const headCheck = checkVerticalCollisionOBB(
-            new THREE.Vector3(
-                playerCharacter.position.x,
-                playerCharacter.position.y + cameraEyeHeight + jumpStrength * 1,
-                playerCharacter.position.z
-            ),
-            'up'
-        );
+    if (jumpPressed && canJump) {
+        const headCheck = checkVerticalCollisionOBB(new THREE.Vector3(camera.position.x, camera.position.y + jumpStrength * 1, camera.position.z), 'up');
         if (!headCheck.collision) {
             verticalVelocity = jumpStrength;
             canJump = false;
+            if (isRunning) {
+                bunnyHopMultiplier = Math.min(bunnyHopMultiplier * 1.1, maxBunnyHop);
+            }
         }
     }
 }
-
-// Make sure to call the initialization in the GLTF loader
-// Find this section in your code and ADD the initialization call:
-
-loader.load('/model.glb',
-    (gltf) => {
-        console.log('GLTF model loaded successfully');
-        scene.add(gltf.scene);
-
-        const box = new THREE.Box3().setFromObject(gltf.scene);
-        const center = box.getCenter(new THREE.Vector3());
-        gltf.scene.position.sub(center);
-        orbitControls.target.copy(center);
-        orbitControls.update();
-
-        initializeSmartLOD(gltf.scene);
-
-        requestAnimationFrame(() => {
-            // ... existing collision setup code ...
-
-            // ADD THIS LINE at the end of requestAnimationFrame:
-            initializeThirdPersonAssets();
-        });
-    },
-    (progress) => {
-        const percentComplete = (progress.loaded / progress.total) * 100;
-        console.log(`GLTF Loading: ${Math.round(percentComplete)}%`);
-    },
-    (error) => {
-        console.error('GLTF loading error:', error);
-    }
-);
 
 // Start animation loop
 animate();
