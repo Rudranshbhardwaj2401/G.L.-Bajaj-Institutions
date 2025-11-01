@@ -49,6 +49,25 @@ const predefinedViews = [
     { position: new THREE.Vector3(55, 26.5, 65), lookAt: new THREE.Vector3(52.38, 0.50, -8.89), name: 'Boys-Hostel Balcony View' },
     { position: new THREE.Vector3(-31.93, 31, 5.05), lookAt: new THREE.Vector3(0, 0, 0), name: 'Girls-Hostel Balcony View' },
 ];
+
+// Add this new code block near the top of your main.js file
+
+let fpsHintDismissed = false;
+
+window.dismissFpsHint = function () {
+    if (fpsHintDismissed) return; // Don't do anything if already hidden
+
+    const hint = document.getElementById('fpsHintTooltip');
+    if (hint) {
+        hint.style.opacity = '0'; // Fade it out
+        hint.style.animation = 'none'; // Stop the floating animation
+        setTimeout(() => {
+            hint.style.display = 'none'; // Hide it completely after the fade
+        }, 400); // This should match the transition duration in the CSS
+    }
+    fpsHintDismissed = true;
+};
+
 let jumpPressed = false;
 let yellowCuboids = [];
 // Create popup div dynamically and style it
@@ -1411,6 +1430,11 @@ let activeControls = orbitControls;
 
 // In main.js, replace the old function with this
 function activateOrbitControls() {
+
+    const cameraModeButton = document.getElementById('desktopCameraModeButton');
+    cameraModeButton.textContent = 'Orbit Mode';
+    cameraModeButton.classList.remove('fps-mode');
+
     document.getElementById('viewsContainer')?.classList.remove('show');
     document.getElementById('desktopCameraModeButton')?.classList.remove('disabled');
     // This line correctly fades the "Views" button
@@ -1549,6 +1573,12 @@ function createYellowCuboids() {
 
 // In main.js, replace the old function with this
 function activateFPSControls() {
+    dismissFpsHint();
+
+    const cameraModeButton = document.getElementById('desktopCameraModeButton');
+    cameraModeButton.textContent = 'FPS Mode';
+    cameraModeButton.classList.add('fps-mode');
+
     document.getElementById('viewsContainer')?.classList.remove('show');
     document.getElementById('desktopCameraModeButton')?.classList.remove('disabled');
     // This line correctly fades the "Views" button

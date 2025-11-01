@@ -910,6 +910,61 @@
         .disabled {
             opacity: 0.6;
         }
+
+        /* in index.html, inside the <style> tag */
+
+/* --- ✅ START: ADD THESE NEW STYLES FOR THE HINT TOOLTIP --- */
+
+/* in index.html, inside the <style> tag */
+
+#fpsHintTooltip {
+    position: absolute;
+    top: 65px; /* Positioned below the camera button */
+    /* This combination perfectly centers the tooltip under the button */
+    right: 125px;
+    transform: translateX(50%);
+    width: 130px; /* Gives the tooltip a consistent width */
+    text-align: center; /* Ensures the two lines of text are centered */
+    background: rgba(33, 150, 243, 0.9);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    z-index: 9;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    animation: floatAnimation 2.5s ease-in-out infinite;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+/* Creates the small arrow pointing up from the tooltip */
+#fpsHintTooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%; /* Sits on top of the tooltip element */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent rgba(33, 150, 243, 0.9) transparent;
+}
+
+/* Defines the floating keyframes */
+@keyframes floatAnimation {
+    0%, 100% {
+        /* Adjust the first value if you changed the main transform */
+        transform: translate(50%, 0px);
+    }
+    50% {
+        transform: translate(50%, -6px); /* Moves it up smoothly */
+    }
+}
+
+/* --- ✅ END: HINT TOOLTIP STYLES --- */
     </style>
 </head>
 
@@ -1104,6 +1159,9 @@
 
         <!-- Desktop Camera Mode Button -->
         <button id="desktopCameraModeButton">Orbit Mode</button>
+                <div id="fpsHintTooltip">
+                    Change to <br> FPS Mode!
+                </div>
     </div>
     <button id="viewsModeButton" class="disabled">Other Views</button>
     <div id="viewsContainer">
@@ -1381,11 +1439,6 @@
         };
 
         // Initialize everything when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            startLoading();
-            initControlsMenu();
-            initDesktopCameraToggle();
-        });
         (function () {
             const audio = document.getElementById('bgAudio');
             const btn = document.getElementById('audioToggleButton');
